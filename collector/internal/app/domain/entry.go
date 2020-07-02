@@ -3,10 +3,30 @@ package domain
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/buger/jsonparser"
 )
+
+type EntryList []*Entry
+
+func (e *EntryList) UnmarshalJSON(data []byte) (err error) {
+	*e = make([]*Entry, 0)
+
+	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		if err != nil {
+			return
+		}
+
+		entry := &Entry{}
+		if err = entry.UnmarshalJSON(value); err == nil {
+			*e = append(*e, entry)
+		}
+	})
+
+	return err
+}
 
 type Entry struct {
 	Time        time.Time
@@ -36,21 +56,21 @@ func (e *Entry) parseRootObject(key []byte, value []byte, dataType jsonparser.Va
 	case "time":
 		e.Time, err = e.parseTime(value)
 	case "namespace":
-		e.Namespace = string(value)
+		e.Namespace = e.parseString(value)
 	case "source":
-		e.Source = string(value)
+		e.Source = e.parseString(value)
 	case "host":
-		e.Host = string(value)
+		e.Host = e.parseString(value)
 	case "level":
-		e.Level = string(value)
+		e.Level = e.parseString(value)
 	case "trace_id":
-		e.TraceID = string(value)
+		e.TraceID = e.parseString(value)
 	case "message":
-		e.Message = string(value)
+		e.Message = e.parseString(value)
 	case "build_commit":
-		e.BuildCommit = string(value)
+		e.BuildCommit = e.parseString(value)
 	case "config_hash":
-		e.ConfigHash = string(value)
+		e.ConfigHash = e.parseString(value)
 	default:
 		return e.parseOtherObject(key, value, dataType, offset)
 	}
@@ -93,15 +113,15 @@ func (e *Entry) appendFloat(key, value []byte) error {
 		return err
 	}
 
-	e.FloatKey = append(e.FloatKey, string(key))
+	e.FloatKey = append(e.FloatKey, e.parseString(key))
 	e.FloatVal = append(e.FloatVal, f)
 
 	return nil
 }
 
 func (e *Entry) appendString(key, value []byte) {
-	e.StringKey = append(e.StringKey, string(key))
-	e.StringVal = append(e.StringVal, string(value))
+	e.StringKey = append(e.StringKey, e.parseString(key))
+	e.StringVal = append(e.StringVal, e.parseString(value))
 }
 
 func (e *Entry) parseTime(data []byte) (time.Time, error) {
@@ -111,4 +131,8 @@ func (e *Entry) parseTime(data []byte) (time.Time, error) {
 	}
 
 	return time.Unix(0, nsec), nil
+}
+
+func (e *Entry) parseString(data []byte) string {
+	return strings.ToLower(string(data))
 }

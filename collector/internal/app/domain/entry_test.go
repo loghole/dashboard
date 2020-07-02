@@ -32,6 +32,7 @@ var data = []byte(`
       "e",
       "f"
    ],
+   "boolKey": true,
    "key3":{
       "key4":{
          "key5":[
@@ -67,6 +68,227 @@ func TestEntry_UnmarshalJSON(t *testing.T) {
 	log.Println(entry.FloatKey)
 	log.Println(entry.FloatVal)
 }
+
+var data2 = []byte(`
+[{
+   "time":1593709730877594291,
+   "namespace":"prod",
+   "source":"app_1",
+   "host":"127.100.0.1:50000",
+   "level":"debug",
+   "trace_id":"1c7fuhpo0ln2dcq",
+   "message":"read failed: some message 4",
+   "build_commit":"db957a22b3c1d6e508c0828917a5e14c572fb007",
+   "config_hash":"130362a6fd10cf2f939dd0cfc0ab222cee6a99ec",
+   "key1":[
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+   ],
+   "key2":[
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+   ],
+   "boolKey": true,
+   "key3":{
+      "key4":{
+         "key5":[
+            11,
+            11,
+            11,
+            "WWW",
+			{"someKey": "someValue"}
+         ]
+      }
+   }
+},
+{
+   "time":1593709730877594291,
+   "namespace":"prod",
+   "source":"app_1",
+   "host":"127.100.0.1:50000",
+   "level":"debug",
+   "trace_id":"1c7fuhpo0ln2dcq",
+   "message":"read failed: some message 4",
+   "build_commit":"db957a22b3c1d6e508c0828917a5e14c572fb007",
+   "config_hash":"130362a6fd10cf2f939dd0cfc0ab222cee6a99ec",
+   "key1":[
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+   ],
+   "key2":[
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+   ],
+   "boolKey": true,
+   "key3":{
+      "key4":{
+         "key5":[
+            11,
+            11,
+            11,
+            "WWW",
+			{"someKey": "someValue"}
+         ]
+      }
+   }
+},
+{
+   "time":1593709730877594291,
+   "namespace":"prod",
+   "source":"app_1",
+   "host":"127.100.0.1:50000",
+   "level":"debug",
+   "trace_id":"1c7fuhpo0ln2dcq",
+   "message":"read failed: some message 4",
+   "build_commit":"db957a22b3c1d6e508c0828917a5e14c572fb007",
+   "config_hash":"130362a6fd10cf2f939dd0cfc0ab222cee6a99ec",
+   "key1":[
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+   ],
+   "key2":[
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+   ],
+   "boolKey": true,
+   "key3":{
+      "key4":{
+         "key5":[
+            11,
+            11,
+            11,
+            "WWW",
+			{"someKey": "someValue"}
+         ]
+      }
+   }
+},
+{
+   "time":1593709730877594291,
+   "namespace":"prod",
+   "source":"app_1",
+   "host":"127.100.0.1:50000",
+   "level":"debug",
+   "trace_id":"1c7fuhpo0ln2dcq",
+   "message":"read failed: some message 4",
+   "build_commit":"db957a22b3c1d6e508c0828917a5e14c572fb007",
+   "config_hash":"130362a6fd10cf2f939dd0cfc0ab222cee6a99ec",
+   "key1":[
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+   ],
+   "key2":[
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+   ],
+   "boolKey": true,
+   "key3":{
+      "key4":{
+         "key5":[
+            11,
+            11,
+            11,
+            "WWW",
+			{"someKey": "someValue"}
+         ]
+      }
+   }
+},
+{
+   "time":1593709730877594291,
+   "namespace":"prod",
+   "source":"app_1",
+   "host":"127.100.0.1:50000",
+   "level":"debug",
+   "trace_id":"1c7fuhpo0ln2dcq",
+   "message":"read failed: some message 4",
+   "build_commit":"db957a22b3c1d6e508c0828917a5e14c572fb007",
+   "config_hash":"130362a6fd10cf2f939dd0cfc0ab222cee6a99ec",
+   "key1":[
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+   ],
+   "key2":[
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f"
+   ],
+   "boolKey": true,
+   "key3":{
+      "key4":{
+         "key5":[
+            11,
+            11,
+            11,
+            "WWW",
+			{"someKey": "someValue"}
+         ]
+      }
+   }
+}]`)
+
+func TestEntryList_UnmarshalJSON(t *testing.T) {
+	list := EntryList{}
+
+	if err := list.UnmarshalJSON(data2); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, val := range list {
+		log.Println(*val)
+	}
+}
+
+func BenchmarkEntryList_UnmarshalJSON(b *testing.B) {
+	list := EntryList{}
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if err := list.UnmarshalJSON(data2); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 
 func BenchmarkEntry_UnmarshalJSON(b *testing.B) {
 	entry := &Entry{}
