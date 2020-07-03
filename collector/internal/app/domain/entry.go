@@ -58,7 +58,7 @@ func (e *Entry) UnmarshalJSON(data []byte) (err error) {
 	return jsonparser.ObjectEach(data, e.parseRootObject)
 }
 
-func (e *Entry) parseRootObject(key []byte, value []byte, dataType jsonparser.ValueType, offset int) (err error) {
+func (e *Entry) parseRootObject(key, value []byte, dataType jsonparser.ValueType, offset int) (err error) {
 	switch string(key) {
 	case "time":
 		e.Time, err = e.parseTime(value)
@@ -85,7 +85,7 @@ func (e *Entry) parseRootObject(key []byte, value []byte, dataType jsonparser.Va
 	return err
 }
 
-func (e *Entry) parseOtherObject(key []byte, value []byte, dataType jsonparser.ValueType, _ int) (err error) {
+func (e *Entry) parseOtherObject(key, value []byte, dataType jsonparser.ValueType, _ int) (err error) {
 	switch dataType {
 	case jsonparser.Array:
 		return e.parseArray(key, value)

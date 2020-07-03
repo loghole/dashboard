@@ -38,4 +38,3 @@ func (r *Repository) StoreEntryList(ctx context.Context, list []*domain.Entry) (
 
 	return tx.Commit()
 }
-

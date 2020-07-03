@@ -29,7 +29,7 @@ func NewStoreEntryList(
 func (s *StoreEntryList) Do(ctx context.Context, data []byte) (err error) {
 	defer tracing.ChildSpan(&ctx).Finish()
 
-	list, err := s.parseEntryList(ctx, data[:])
+	list, err := s.parseEntryList(ctx, data)
 	if err != nil {
 		s.logger.Errorf(ctx, "parse entry list failed: %v", err)
 
