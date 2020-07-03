@@ -1,85 +1,134 @@
 package main
 
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/gadavy/tracing"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/lissteron/loghole/collector/config"
+	"github.com/lissteron/loghole/collector/internal/app/controllers/http/handlers"
+	"github.com/lissteron/loghole/collector/internal/app/repositories/clickhouse"
+	"github.com/lissteron/loghole/collector/internal/app/usecases"
+	"github.com/lissteron/loghole/collector/pkg/clickhouseclient"
+	"github.com/lissteron/loghole/collector/pkg/log"
+	"github.com/lissteron/loghole/collector/pkg/server"
+)
+
+// nolint: funlen,gocritic
 func main() {
-	m := make(map[string]interface{})
+	// Init config, logger, exit chan
+	config.Init()
 
-	// decode(m) что то там.
+	logger, err := initLogger()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "init logger failed: %v", err)
+		os.Exit(1)
+	}
 
-	level := m["level"]
-	time := m["time"]
-	message := m["message"]
-	build_commit := m["build_commit"]
-	config_hash := m["config_hash"]
-	host := m["host"]
-	source := m["source"]
-	namespace := m["namespace"]
-	action := m["action"]
+	exit := make(chan os.Signal, 1)
+	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
-	var (
-		params_string_keys   = []string{}
-		params_string_values = []string{}
-		params_float_keys    = []string{}
-		params_float_values  = []float64{}
+	// Init jaeger tracer.
+	tracer, err := initTracer()
+	if err != nil {
+		logger.Fatalf("init tracing client failed: %v", err)
+	}
+
+	traceLogger := tracing.NewTraceLogger(logger)
+
+	// Init clients
+	clickhousedb, err := initClickhouse()
+	if err != nil {
+		logger.Fatalf("init clickhouse db client failed: %v", err)
+	}
+
+	// Init repositorie
+	repository := clickhouse.NewRepository(clickhousedb.Client(), traceLogger)
+
+	// Init use case
+	storeEntryList := usecases.NewStoreEntryList(repository, traceLogger)
+
+	// Init handlers
+	entryHandlers := handlers.NewEntryHandlers(storeEntryList, traceLogger, tracer)
+
+	srv := initHTTPServer()
+
+	r := srv.Router()
+	r.HandleFunc("/api/v1/store", entryHandlers.StoreListHandler)
+	r.HandleFunc("/api/v1/ping", entryHandlers.PingHandler)
+
+	var errGroup, ctx = errgroup.WithContext(context.Background())
+
+	errGroup.Go(func() error {
+		logger.Infof("start http server on: %s", srv.Addr())
+		return srv.ListenAndServe()
+	})
+
+	select {
+	case <-exit:
+		logger.Info("stopping application")
+	case <-ctx.Done():
+		logger.Error("stopping application with error")
+	}
+
+	if err = srv.Shutdown(context.Background()); err != nil {
+		logger.Errorf("error while stopping web server: %v", err)
+	}
+
+	if err = errGroup.Wait(); err != nil {
+		logger.Errorf("error while waiting for goroutines: %v", err)
+	}
+
+	if err = tracer.Close(); err != nil {
+		logger.Errorf("error while stopping tracer: %v", err)
+	}
+
+	if err = clickhousedb.Close(); err != nil {
+		logger.Errorf("error while stopping clickhouse db: %v", err)
+	}
+
+	logger.Info("application stopped")
+}
+
+func initLogger() (*zap.SugaredLogger, error) {
+	return log.NewLogger(
+		log.SetLevel(viper.GetString("LOGGER_LEVEL")),
+		log.AddCaller(),
 	)
-
-	for key, value := range m {
-		if isDefault(key) {
-			continue
-		}
-
-		
-	}
 }
 
-func isDefault(key string) bool {
-	m := map[string]struct{}{
-		"level": struct{}{},
-		"time": struct{}{},
-		"message": struct{}{},
-		"build_commit": struct{}{},
-		"config_hash": struct{}{},
-		"host": struct{}{},
-		"source": struct{}{},
-		"namespace": struct{}{},
-		"action": struct{}{},
-	}
-
-	_, ok := m[key]
-
-	return ok
+func initTracer() (*tracing.Tracer, error) {
+	return tracing.NewTracer(&tracing.Config{
+		URI:         viper.GetString("JAEGER_URI"),
+		Enabled:     viper.GetString("JAEGER_URI") != "",
+		ServiceName: "collector",
+	})
 }
 
-/*
-    `params_string.keys` Array(String),
-    `params_string.values` Array(String),
-
-{
-   "level":"ERROR",                                           ---
-   "time":"2020-06-28T17:46:18+03:00",                        ---
-   "caller":"app1/main.go:125",                               +++
-   "message":"update order failed: some message 4",           ---
-   "build_commit":"db957a22b3c1d6e508c0828917a5e14c572fb007", ---
-   "config_hash":"130362a6fd10cf2f939dd0cfc0ab222cee6a99ec",  ---
-   "host":"127.100.0.1:50000",                                ---
-   "source":"app_1",                                          ---
-   "namespace":"prod",                                        ---
-   "action":"1c75sek3g3jn6pl",                                ---
-   "some_type": {                                             +++
-	   "key1": "aaaa",
-	   "key2": [1, 2, 3, 4],
-	   "key3": {
-		   "key3_key1": "AAAAAAAAAAAAA!!!!!!"
-	   }
-   }
+func initClickhouse() (*clickhouseclient.Client, error) {
+	return clickhouseclient.NewClient(&clickhouseclient.Options{
+		Addr:         viper.GetString("CLICKHOUSE_URI"),
+		User:         viper.GetString("CLICKHOUSE_USER"),
+		Database:     viper.GetString("CLICKHOUSE_DATABASE"),
+		ReadTimeout:  viper.GetInt("CLICKHOUSE_READ_TIMEOUT"),
+		WriteTimeout: viper.GetInt("CLICKHOUSE_WRITE_TIMEOUT"),
+		SchemaPath:   viper.GetString("CLICKHOUSE_SCHEMA_PATH"),
+	})
 }
 
-params = {ALL JSON}
-
-params_string.keys   = [caller, key1, key3_key1]
-params_string.values = [app1/main.go:125, "aaaa", "AAAAAAAAAAAAA!!!!!!"]
-
-params_float.keys   = [key2, key2, key2, key2]
-params_float.values = [1, 2 ,3, 4]
-
-*/
-
+func initHTTPServer() *server.HTTP {
+	return server.NewHTTP(
+		fmt.Sprintf("0.0.0.0:%s", viper.GetString("SERVICE_HTTP_PORT")),
+		server.WithReadTimeout(time.Minute),
+		server.WithWriteTimeout(time.Minute),
+		server.WithIdleTimeout(time.Minute*10), // nolint:gomnd,gocritic
+	)
+}

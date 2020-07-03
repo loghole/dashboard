@@ -18,13 +18,18 @@ func (r *Repository) StoreEntryList(ctx context.Context, list []*domain.Entry) (
 
 	defer func() { _ = tx.Rollback() }()
 
-	query := `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,leve,trace_id,message,params,
+	query := `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,level,trace_id,message,params,
 		params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return err
+	}
+
 	for _, val := range list {
-		_, err = tx.Exec(query, val.Time, val.Time, val.Time.UnixNano(), val.Namespace, val.Source,
-			val.Host, val.Level, val.TraceID, val.Message, val.Params, val.StringKey,
+		_, err = stmt.ExecContext(ctx, val.Time, val.Time, val.Time.UnixNano(), val.Namespace, val.Source,
+			val.Host, val.Level, val.TraceID, val.Message, string(val.Params), val.StringKey,
 			val.StringVal, val.FloatKey, val.FloatVal, val.BuildCommit, val.ConfigHash)
 		if err != nil {
 			return err

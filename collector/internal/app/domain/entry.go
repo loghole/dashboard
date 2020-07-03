@@ -14,18 +14,25 @@ type EntryList []*Entry
 func (e *EntryList) UnmarshalJSON(data []byte) (err error) {
 	*e = make([]*Entry, 0)
 
-	_, err = jsonparser.ArrayEach(data, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		if err != nil {
-			return
-		}
-
-		entry := &Entry{}
-		if err = entry.UnmarshalJSON(value); err == nil {
-			*e = append(*e, entry)
-		}
-	})
+	_, err = jsonparser.ArrayEach(data, e.parseArray)
 
 	return err
+}
+
+func (e *EntryList) parseArray(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+	if err != nil {
+		return
+	}
+
+	if dataType != jsonparser.Object {
+		return
+	}
+
+	entry := &Entry{}
+
+	if err = entry.UnmarshalJSON(value); err == nil {
+		*e = append(*e, entry)
+	}
 }
 
 type Entry struct {
