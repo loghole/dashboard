@@ -16,7 +16,7 @@ import (
 	"github.com/lissteron/loghole/collector/config"
 	"github.com/lissteron/loghole/collector/internal/app/controllers/http/handlers"
 	"github.com/lissteron/loghole/collector/internal/app/repositories/clickhouse"
-	"github.com/lissteron/loghole/collector/internal/app/usecases"
+	"github.com/lissteron/loghole/collector/internal/app/services/entry"
 	"github.com/lissteron/loghole/collector/pkg/clickhouseclient"
 	"github.com/lissteron/loghole/collector/pkg/log"
 	"github.com/lissteron/loghole/collector/pkg/server"
@@ -53,16 +53,17 @@ func main() {
 	// Init repositorie
 	repository := clickhouse.NewRepository(clickhousedb.Client(), traceLogger)
 
-	// Init use case
-	storeEntryList := usecases.NewStoreEntryList(repository, traceLogger)
+	// Init service
+	entryService := entry.NewService(repository, traceLogger)
 
 	// Init handlers
-	entryHandlers := handlers.NewEntryHandlers(storeEntryList, traceLogger, tracer)
+	entryHandlers := handlers.NewEntryHandlers(entryService, traceLogger, tracer)
 
 	srv := initHTTPServer()
 
 	r := srv.Router()
-	r.HandleFunc("/api/v1/store", entryHandlers.StoreListHandler)
+	r.HandleFunc("/api/v1/store", entryHandlers.StoreItemHandler)
+	r.HandleFunc("/api/v1/store/list", entryHandlers.StoreListHandler)
 	r.HandleFunc("/api/v1/ping", entryHandlers.PingHandler)
 
 	var errGroup, ctx = errgroup.WithContext(context.Background())

@@ -3,6 +3,7 @@ package clickhouse
 import (
 	"context"
 
+	"github.com/gadavy/tracing"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,4 +25,10 @@ type Repository struct {
 
 func NewRepository(db *sqlx.DB, logger Logger) *Repository {
 	return &Repository{db: db, logger: logger}
+}
+
+func (r *Repository) Ping(ctx context.Context) error {
+	defer tracing.ChildSpan(&ctx).Finish()
+
+	return r.db.PingContext(ctx)
 }

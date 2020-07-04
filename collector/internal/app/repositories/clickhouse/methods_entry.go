@@ -8,6 +8,35 @@ import (
 	"github.com/lissteron/loghole/collector/internal/app/domain"
 )
 
+func (r *Repository) StoreEntryItem(ctx context.Context, entry *domain.Entry) (err error) {
+	defer tracing.ChildSpan(&ctx).Finish()
+
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = tx.Rollback() }()
+
+	query := `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,level,trace_id,message,params,
+		params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.ExecContext(ctx, entry.Time, entry.Time, entry.Time.UnixNano(), entry.Namespace, entry.Source,
+		entry.Host, entry.Level, entry.TraceID, entry.Message, string(entry.Params), entry.StringKey,
+		entry.StringVal, entry.FloatKey, entry.FloatVal, entry.BuildCommit, entry.ConfigHash)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (r *Repository) StoreEntryList(ctx context.Context, list []*domain.Entry) (err error) {
 	defer tracing.ChildSpan(&ctx).Finish()
 
@@ -22,7 +51,7 @@ func (r *Repository) StoreEntryList(ctx context.Context, list []*domain.Entry) (
 		params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 
-	stmt, err := tx.Prepare(query)
+	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		return err
 	}

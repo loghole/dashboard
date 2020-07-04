@@ -24,25 +24,49 @@ type Logger interface {
 	Errorf(ctx context.Context, template string, args ...interface{})
 }
 
-type StoreEntryList interface {
-	Do(ctx context.Context, data []byte) (err error)
+type EntryService interface {
+	Ping(ctx context.Context) error
+	StoreItem(ctx context.Context, data []byte) (err error)
+	StoreList(ctx context.Context, data []byte) (err error)
 }
 
 type EntryHandlers struct {
-	storeList StoreEntryList
-	logger    Logger
-	tracer    *tracing.Tracer
+	service EntryService
+	logger  Logger
+	tracer  *tracing.Tracer
 }
 
 func NewEntryHandlers(
-	storeList StoreEntryList,
+	service EntryService,
 	logger Logger,
 	tracer *tracing.Tracer,
 ) *EntryHandlers {
 	return &EntryHandlers{
-		storeList: storeList,
-		logger:    logger,
-		tracer:    tracer,
+		service: service,
+		logger:  logger,
+		tracer:  tracer,
+	}
+}
+
+func (h *EntryHandlers) StoreItemHandler(w http.ResponseWriter, r *http.Request) {
+	span := h.tracer.NewSpan().WithName(r.URL.String()).Build()
+	defer span.Finish()
+
+	resp, ctx := response.NewBaseResponse(), span.Context(r.Context())
+	defer resp.Write(ctx, w, h.logger)
+
+	data, err := readData(r.Body)
+	if err != nil {
+		h.logger.Errorf(ctx, "read body failed: %v", err)
+		resp.ParseError(err)
+
+		return
+	}
+
+	err = h.service.StoreItem(ctx, data)
+	if err != nil {
+		h.logger.Errorf(ctx, "store entry item failed: %v", err)
+		resp.ParseError(err)
 	}
 }
 
@@ -61,12 +85,10 @@ func (h *EntryHandlers) StoreListHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = h.storeList.Do(ctx, data)
+	err = h.service.StoreList(ctx, data)
 	if err != nil {
 		h.logger.Errorf(ctx, "store entry list failed: %v", err)
 		resp.ParseError(err)
-
-		return
 	}
 }
 
@@ -74,7 +96,13 @@ func (h *EntryHandlers) PingHandler(w http.ResponseWriter, r *http.Request) {
 	span := h.tracer.NewSpan().WithName(r.URL.String()).Build()
 	defer span.Finish()
 
-	response.NewBaseResponse().Write(span.Context(r.Context()), w, h.logger)
+	resp, ctx := response.NewBaseResponse(), span.Context(r.Context())
+	defer resp.Write(ctx, w, h.logger)
+
+	if err := h.service.Ping(ctx); err != nil {
+		h.logger.Errorf(ctx, "ping failed: %v", err)
+		resp.ParseError(err)
+	}
 }
 
 func readData(r io.Reader) ([]byte, error) {
