@@ -23,7 +23,6 @@ type Logger interface {
 
 type Storage interface {
 	Ping(ctx context.Context) error
-	StoreEntryItem(ctx context.Context, entry *domain.Entry) (err error)
 	StoreEntryList(ctx context.Context, list []*domain.Entry) (err error)
 }
 
@@ -59,7 +58,7 @@ func (s *Service) StoreItem(ctx context.Context, data []byte) (err error) {
 		return simplerr.WrapWithCode(err, codes.UnmarshalError, "parse json failed")
 	}
 
-	err = s.storage.StoreEntryItem(ctx, entry)
+	err = s.storage.StoreEntryList(ctx, []*domain.Entry{entry})
 	if err != nil {
 		s.logger.Errorf(ctx, "store entry list failed: %v", err)
 		return simplerr.WrapWithCode(err, codes.DatabaseError, "store failed")
