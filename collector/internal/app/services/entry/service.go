@@ -42,7 +42,12 @@ func NewService(storage Storage, logger Logger) *Service {
 func (s *Service) Ping(ctx context.Context) error {
 	defer tracing.ChildSpan(&ctx).Finish()
 
-	return s.storage.Ping(ctx)
+	if err := s.storage.Ping(ctx); err != nil {
+		s.logger.Errorf(ctx, "ping db failed: %v", err)
+		return simplerr.WrapWithCode(err, codes.DatabaseError, "ping failed")
+	}
+
+	return nil
 }
 
 func (s *Service) StoreItem(ctx context.Context, data []byte) (err error) {
