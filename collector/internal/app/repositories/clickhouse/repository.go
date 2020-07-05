@@ -87,16 +87,11 @@ func (r *EntryRepository) storeEntryChan(ctx context.Context) error {
 				continue
 			}
 
-			for {
-				if err := tx.Commit(); err != nil {
-					r.logger.Error(ctx, err)
-					continue
-				}
-
-				count = 0
-
-				break
+			if err := tx.Commit(); err != nil {
+				r.logger.Error(ctx, err)
 			}
+
+			count = 0
 
 			for {
 				tx, stmt, err = r.getInsertEntryStmt()
@@ -124,17 +119,19 @@ func (r *EntryRepository) storeEntryChan(ctx context.Context) error {
 	return tx.Commit()
 }
 
-func (r *EntryRepository) getInsertEntryStmt() (tx *sql.Tx, stmt *sql.Stmt, err error) {
-	query := `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,level,trace_id,message,params,
-		params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
+const (
+	insertLogsQuery = `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,level,trace_id,message,
+		params,params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+)
 
+func (r *EntryRepository) getInsertEntryStmt() (tx *sql.Tx, stmt *sql.Stmt, err error) {
 	tx, err = r.db.Begin()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	stmt, err = tx.Prepare(query)
+	stmt, err = tx.Prepare(insertLogsQuery)
 	if err != nil {
 		return nil, nil, err
 	}
