@@ -50,8 +50,12 @@ func main() {
 		logger.Fatalf("init clickhouse db client failed: %v", err)
 	}
 
-	// Init repositorie
-	repository := clickhouse.NewRepository(clickhousedb.Client(), traceLogger)
+	// Init repository
+	repository := clickhouse.NewEntryRepository(
+		clickhousedb.Client(),
+		traceLogger,
+		viper.GetInt("ENTRY_REPOSITORY_CAP"),
+	)
 
 	// Init service
 	entryService := entry.NewService(repository, traceLogger)
@@ -69,6 +73,11 @@ func main() {
 	var errGroup, ctx = errgroup.WithContext(context.Background())
 
 	errGroup.Go(func() error {
+		logger.Info("start entry writer")
+		return repository.Run(ctx)
+	})
+
+	errGroup.Go(func() error {
 		logger.Infof("start http server on: %s", srv.Addr())
 		return srv.ListenAndServe()
 	})
@@ -83,6 +92,8 @@ func main() {
 	if err = srv.Shutdown(context.Background()); err != nil {
 		logger.Errorf("error while stopping web server: %v", err)
 	}
+
+	repository.Stop()
 
 	if err = errGroup.Wait(); err != nil {
 		logger.Errorf("error while waiting for goroutines: %v", err)

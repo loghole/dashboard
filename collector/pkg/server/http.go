@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/net/http2"
 )
 
 type Option func(s *http.Server)
@@ -53,10 +52,6 @@ func NewHTTP(addr string, options ...Option) *HTTP {
 		server: server,
 		router: router,
 	}
-}
-
-func (h *HTTP) WithHTTP2() error {
-	return http2.ConfigureServer(h.server, &http2.Server{})
 }
 
 func (h *HTTP) ListenAndServe() error {
