@@ -11,6 +11,12 @@ import (
 	"github.com/lissteron/loghole/collector/internal/app/domain"
 )
 
+const (
+	insertLogsQuery = `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,level,trace_id,message,
+		params,params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+)
+
 type Logger interface {
 	Debug(ctx context.Context, args ...interface{})
 	Debugf(ctx context.Context, template string, args ...interface{})
@@ -26,17 +32,20 @@ type EntryRepository struct {
 	db     *sqlx.DB
 	logger Logger
 
-	queue chan *domain.Entry
+	period time.Duration
+	queue  chan *domain.Entry
 }
 
 func NewEntryRepository(
 	db *sqlx.DB,
 	logger Logger,
 	capacity int,
+	period time.Duration,
 ) *EntryRepository {
 	return &EntryRepository{
 		db:     db,
 		logger: logger,
+		period: period,
 		queue:  make(chan *domain.Entry, capacity),
 	}
 }
@@ -75,7 +84,7 @@ func (r *EntryRepository) storeEntryChan(ctx context.Context) error {
 		entry  *domain.Entry
 		count  uint
 		active = true
-		ticker = time.NewTicker(time.Second)
+		ticker = time.NewTicker(r.period)
 	)
 
 	defer ticker.Stop()
@@ -118,12 +127,6 @@ func (r *EntryRepository) storeEntryChan(ctx context.Context) error {
 
 	return tx.Commit()
 }
-
-const (
-	insertLogsQuery = `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,level,trace_id,message,
-		params,params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-)
 
 func (r *EntryRepository) getInsertEntryStmt() (tx *sql.Tx, stmt *sql.Stmt, err error) {
 	tx, err = r.db.Begin()

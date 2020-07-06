@@ -54,6 +54,7 @@ func main() {
 		clickhousedb.Client(),
 		traceLogger,
 		viper.GetInt("ENTRY_REPOSITORY_CAP"),
+		viper.GetDuration("ENTRY_REPOSITORY_PERIOD"),
 	)
 
 	// Init service
