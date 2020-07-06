@@ -23,7 +23,10 @@ services:
     working_dir: /app/cmd/collector/
     command: go run main.go
     environment:
-      - SERVICE_HTTP_PORT=8080
+      - SERVER_HTTP_PORT=8080
+      - SERVER_CERT=
+      - SERVER_KEY=
+
       - LOGGER_LEVEL=debug
 
       - CLICKHOUSE_URI=clickhouse:9000

@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gadavy/tracing"
 	"github.com/spf13/viper"
@@ -50,8 +49,13 @@ func main() {
 		logger.Fatalf("init clickhouse db client failed: %v", err)
 	}
 
-	// Init repositorie
-	repository := clickhouse.NewRepository(clickhousedb.Client(), traceLogger)
+	// Init repository
+	repository := clickhouse.NewEntryRepository(
+		clickhousedb.Client(),
+		traceLogger,
+		viper.GetInt("ENTRY_REPOSITORY_CAP"),
+		viper.GetDuration("ENTRY_REPOSITORY_PERIOD"),
+	)
 
 	// Init service
 	entryService := entry.NewService(repository, traceLogger)
@@ -69,6 +73,11 @@ func main() {
 	var errGroup, ctx = errgroup.WithContext(context.Background())
 
 	errGroup.Go(func() error {
+		logger.Info("start entry writer")
+		return repository.Run(ctx)
+	})
+
+	errGroup.Go(func() error {
 		logger.Infof("start http server on: %s", srv.Addr())
 		return srv.ListenAndServe()
 	})
@@ -83,6 +92,8 @@ func main() {
 	if err = srv.Shutdown(context.Background()); err != nil {
 		logger.Errorf("error while stopping web server: %v", err)
 	}
+
+	repository.Stop()
 
 	if err = errGroup.Wait(); err != nil {
 		logger.Errorf("error while waiting for goroutines: %v", err)
@@ -127,9 +138,10 @@ func initClickhouse() (*clickhouseclient.Client, error) {
 
 func initHTTPServer() *server.HTTP {
 	return server.NewHTTP(
-		fmt.Sprintf("0.0.0.0:%s", viper.GetString("SERVICE_HTTP_PORT")),
-		server.WithReadTimeout(time.Minute),
-		server.WithWriteTimeout(time.Minute),
-		server.WithIdleTimeout(time.Minute*10), // nolint:gomnd,gocritic
+		fmt.Sprintf("0.0.0.0:%s", viper.GetString("SERVER_HTTP_PORT")),
+		server.WithReadTimeout(viper.GetDuration("SERVER_READ_TIMEOUT")),
+		server.WithWriteTimeout(viper.GetDuration("SERVER_WRITE_TIMEOUT")),
+		server.WithIdleTimeout(viper.GetDuration("SERVER_IDLE_TIMEOUT")),
+		server.WithTLS(viper.GetString("SERVER_CERT"), viper.GetString("SERVER_KEY")),
 	)
 }

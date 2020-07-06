@@ -1,5 +1,5 @@
 module.exports = {
   devServer: {
-    proxy: 'http://backend:8080',
+    proxy: 'http://dashboard_backend:8080',
   },
 };
