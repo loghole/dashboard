@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gadavy/tracing"
 	"github.com/spf13/viper"
@@ -138,9 +137,10 @@ func initClickhouse() (*clickhouseclient.Client, error) {
 
 func initHTTPServer() *server.HTTP {
 	return server.NewHTTP(
-		fmt.Sprintf("0.0.0.0:%s", viper.GetString("SERVICE_HTTP_PORT")),
-		server.WithReadTimeout(time.Minute),
-		server.WithWriteTimeout(time.Minute),
-		server.WithIdleTimeout(time.Minute*10), // nolint:gomnd,gocritic
+		fmt.Sprintf("0.0.0.0:%s", viper.GetString("SERVER_HTTP_PORT")),
+		server.WithReadTimeout(viper.GetDuration("SERVER_READ_TIMEOUT")),
+		server.WithWriteTimeout(viper.GetDuration("SERVER_WRITE_TIMEOUT")),
+		server.WithIdleTimeout(viper.GetDuration("SERVER_IDLE_TIMEOUT")),
+		server.WithTLS(viper.GetString("SERVER_CERT"), viper.GetString("SERVER_KEY")),
 	)
 }
