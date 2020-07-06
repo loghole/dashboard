@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/json"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -103,11 +104,13 @@ func (e *Entry) parseOtherObject(key, value []byte, dataType jsonparser.ValueTyp
 func (e *Entry) parseArray(key, value []byte) (err error) {
 	_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 		if err != nil {
+			log.Printf("[critical] error in callback function: %v", err)
 			return
 		}
 
 		if err = e.parseOtherObject(key, value, dataType, offset); err != nil {
-			panic(err)
+			log.Printf("[critical] parse object failed: %v", err)
+			return
 		}
 	})
 
