@@ -65,8 +65,8 @@ func NewHTTP(addr string, options ...Option) *HTTP {
 }
 
 func (h *HTTP) ListenAndServe() (err error) {
-	switch h.key != "" && h.cert != "" {
-	case true:
+	switch {
+	case h.key != "" && h.cert != "":
 		err = h.server.ListenAndServeTLS(h.cert, h.key)
 	default:
 		err = h.server.ListenAndServe()
