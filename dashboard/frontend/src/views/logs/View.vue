@@ -1,65 +1,7 @@
 <template>
   <div class="columns p-2 pt-4">
     <!-- add param -->
-    <b-sidebar
-      type="is-light"
-      :fullheight="true"
-      :overlay="false"
-      :open.sync="showAddParam"
-      :can-cancel="['escape', 'x']"
-    >
-      <div class="p-2 pt-4">
-        <b-field label="Operator" label-position="on-border">
-          <b-autocomplete
-            v-model="param.operator"
-            placeholder="e.g. >="
-            :data="filteredOperators"
-            :open-on-focus="true"
-            @select="option => (selected = option)"
-          >
-          </b-autocomplete>
-        </b-field>
-
-        <b-field label="Key" label-position="on-border">
-          <input
-            class="input"
-            v-model="param.key"
-            type="text"
-            placeholder="Field name"
-          />
-        </b-field>
-
-        <b-field
-          label="Value"
-          label-position="on-border"
-          v-if="isListValue(param.operator)"
-        >
-          <b-taginput
-            v-model="param.value.list"
-            autocomplete
-            :allow-new="true"
-            placeholder="Value"
-            icon="label"
-          >
-          </b-taginput>
-        </b-field>
-        <b-field label="Value" label-position="on-border" v-else>
-          <input
-            class="input"
-            v-model="param.value.item"
-            type="text"
-            placeholder="Value"
-          />
-        </b-field>
-
-        <button
-          class="button is-small is-fullwidth is-outlined is-success"
-          @click="saveParam()"
-        >
-          Add
-        </button>
-      </div>
-    </b-sidebar>
+    <Sidebar v-model="showAddParam" v-on:save="saveParam"></Sidebar>
     <!-- add param -->
 
     <div class="column page-menu">
@@ -85,7 +27,37 @@
       <!-- // date -->
 
       <!-- level -->
-      <b-field label="Level =" label-position="on-border">
+      <b-field label-position="on-border">
+
+        <!-- В отдельный компонент -->
+
+        <template slot="label">
+          <label class="label" style="z-index: 999">
+            Level
+
+            <b-dropdown aria-role="list">
+              <span
+                slot="trigger"
+                role="button"
+                style="cursor: pointer"
+                class="has-text-success"
+              >
+                =
+              </span>
+
+              <b-dropdown-item aria-role="listitem" @click="alert('asd')"
+                >=</b-dropdown-item
+              >
+              <b-dropdown-item aria-role="listitem" @click="alert('asd')"
+                >!=</b-dropdown-item
+              >
+              <b-dropdown-item aria-role="listitem" @click="alert('asd')"
+                >LIKE</b-dropdown-item
+              >
+            </b-dropdown>
+          </label>
+        </template>
+
         <b-taginput
           v-model="form.level"
           :data="levels"
@@ -180,17 +152,8 @@
       <template v-if="showAdditionalParam">
         <!-- host -->
         <b-field label="Host" label-position="on-border">
-          <b-taginput
-            v-model="form.host"
-            :data="hosts"
-            autocomplete
-            :allow-new="true"
-            :open-on-focus="true"
-            placeholder="Host"
-            @typing="getHostList"
-            icon="label"
-          >
-          </b-taginput>
+          <TagInput v-model="form.host" type="host">
+          </TagInput>
         </b-field>
         <!-- // host -->
 
@@ -247,27 +210,68 @@
     </div>
 
     <div class="column">
-      <b-field label="Search" label-position="on-border">
-        <b-input
-          placeholder="Search..."
-          type="search"
-          icon="magnify"
-          icon-clickable
-          class="w100"
-          v-model="form.message"
-        ></b-input>
-        <p class="control">
-          <b-button class="button is-primary">Search</b-button>
-        </p>
-      </b-field>
+      <div class="columns">
+        <div class="column">
+          <b-taginput
+            v-model="showTags"
+            :data="filteredTags"
+            autocomplete
+            :allow-new="true"
+            :open-on-focus="true"
+            placeholder="Showed tags"
+            icon="label"
+            @typing="getFilteredTags"
+          >
+          </b-taginput>
+        </div>
+        <div class="column">
+          <b-field label="Search" label-position="on-border">
+            <b-input
+              placeholder="Search..."
+              type="search"
+              icon="magnify"
+              icon-clickable
+              class="w100"
+              v-model="form.message"
+            ></b-input>
+            <p class="control">
+              <b-button class="button is-primary">Search</b-button>
+            </p>
+          </b-field>
+        </div>
+      </div>
 
-      <p v-for="(m, i) in messages" :key="i">{{ JSON.stringify(m) }}</p>
-
+      <div class="table-container" v-if="messages.length > 0">
+        <table class="table is-striped is-narrow is-hoverable is-fullwidth">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Level</th>
+              <th>Message</th>
+              <th v-for="(tag, i) in showTags" :key="`header_${i}`">
+                {{ tag }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(message, i) in messages" :key="`message_${i}`">
+              <td style="max-width: 166px">
+                {{ new Date(message.time).toLocaleString() }}
+              </td>
+              <td>{{ message.level.toUpperCase() }}</td>
+              <td>{{ message.message }}</td>
+              <td v-for="(tag, i) in showTags" :key="`tag_${i}`">
+                {{ message[tag] }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <b-skeleton
         size="is-large"
         :active="loading"
         :count="20"
-        v-if="messages.length === 0"
+        v-else
       ></b-skeleton>
     </div>
   </div>
@@ -275,14 +279,20 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import Sidebar from '@/components/Sidebar.vue';
+import TagInput from '@/components/TagInput.vue';
 import { Param, Form, ParamValue } from '../../types/view';
 
 export default Vue.extend({
+  components: {
+    Sidebar,
+    TagInput,
+  },
   data() {
     return {
       loading: true,
       form: {
-        startTime: new Date(new Date().getTime() - 1000 * 60),
+        startTime: new Date(new Date().getTime() - 1000 * 60 * 60 * 24),
         endTime: null,
         namespace: [] as string[],
         source: [] as string[],
@@ -308,10 +318,13 @@ export default Vue.extend({
       hosts: [],
       namespaces: [],
       levels: [],
+      tags: [] as string[],
+      filteredTags: [] as string[],
       operators: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
       showAddParam: false,
       showAdditionalParam: false,
       messages: [],
+      showTags: ['trace_id'],
     };
   },
   computed: {
@@ -334,28 +347,28 @@ export default Vue.extend({
     getLevelList(val: string): void {
       console.log(val);
     },
-    saveParam(): void {
+    getFilteredTags(text: string) {
+      this.filteredTags = this.tags.filter(
+        (option) => option
+          .toString()
+          .toLowerCase()
+          .indexOf(text.toLowerCase()) >= 0,
+      );
+    },
+    saveParam(param: Param): void {
       this.showAddParam = false;
 
       this.params.push({
-        type: this.param.type,
-        key: this.param.key,
-        value: this.param.value,
-        operator: this.param.operator,
-      } as Param);
-
-      this.param = {
-        operator: '',
-        type: '',
-        key: '',
-        value: {
-          item: '',
-          list: [] as string[],
-        } as ParamValue,
-      } as Param;
+        type: param.type,
+        key: param.key,
+        value: param.value,
+        operator: param.operator,
+      });
     },
     removeParam(idx: number): void {
-      this.params = this.params.filter((v, i) => i !== idx);
+      this.$nextTick(() => {
+        this.params = this.params.filter((v, i) => i !== idx);
+      });
     },
     isListValue(operator: string): boolean {
       return ['=', '!=', 'LIKE', 'NOT LIKE'].includes(operator);
@@ -422,15 +435,28 @@ export default Vue.extend({
       });
 
       Vue.axios
-        .post('/api/v1/entry/list', { params, limit: 1000 })
+        .post('/api/v1/entry/list', { params, limit: 100 })
         .then((response) => {
           this.messages = response.data.data;
+
+          this.setTags(response.data.data);
 
           console.log(response.data);
         })
         .catch((e) => {
           console.error(e);
         });
+    },
+    setTags(list: Array<any>): void {
+      const h = {} as Record<string, boolean>;
+
+      list.forEach((l: Record<string, any>) => {
+        Object.keys(l).forEach((k) => {
+          h[k] = true;
+        });
+      });
+
+      this.tags = Object.keys(h);
     },
   },
 });
