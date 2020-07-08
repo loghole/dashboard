@@ -28,84 +28,45 @@
 
       <!-- level -->
       <b-field label-position="on-border">
-
-        <!-- В отдельный компонент -->
-
-        <template slot="label">
-          <label class="label" style="z-index: 999">
-            Level
-
-            <b-dropdown aria-role="list">
-              <span
-                slot="trigger"
-                role="button"
-                style="cursor: pointer"
-                class="has-text-success"
-              >
-                =
-              </span>
-
-              <b-dropdown-item aria-role="listitem" @click="alert('asd')"
-                >=</b-dropdown-item
-              >
-              <b-dropdown-item aria-role="listitem" @click="alert('asd')"
-                >!=</b-dropdown-item
-              >
-              <b-dropdown-item aria-role="listitem" @click="alert('asd')"
-                >LIKE</b-dropdown-item
-              >
-            </b-dropdown>
-          </label>
+<!--    В идеале эту дичь "<template slot="label">Level" бы вынести тоже в компонент,
+        и будет четко, но у меня не вышло :С -->
+        <template slot="label">Level
+          <LableList></LableList>
         </template>
 
-        <b-taginput
-          v-model="form.level"
-          :data="levels"
-          autocomplete
-          :allow-new="true"
-          :open-on-focus="true"
-          placeholder="Level"
-          @typing="getLevelList"
-          icon="label"
-        >
-        </b-taginput>
+        <TagInput v-model="form.level" type="level">
+        </TagInput>
       </b-field>
       <!-- // level -->
 
       <!-- namespace -->
-      <b-field label="Namespace =" label-position="on-border">
-        <b-taginput
-          v-model="form.namespace"
-          :data="namespaces"
-          autocomplete
-          :allow-new="true"
-          :open-on-focus="true"
-          placeholder="Namespace"
-          @typing="getNamespaceList"
-          icon="label"
-        >
-        </b-taginput>
+      <b-field label-position="on-border">
+        <template slot="label">Namespace
+          <LableList></LableList>
+        </template>
+
+        <TagInput v-model="form.namespace" type="namespace">
+        </TagInput>
       </b-field>
       <!-- // namespace -->
 
       <!-- source -->
-      <b-field label="Source" label-position="on-border">
-        <b-taginput
-          v-model="form.source"
-          :data="sources"
-          autocomplete
-          :allow-new="true"
-          :open-on-focus="true"
-          placeholder="Source"
-          @typing="getSourceList"
-          icon="label"
-        >
-        </b-taginput>
+      <b-field label-position="on-border">
+        <template slot="label">Source
+          <LableList></LableList>
+        </template>
+
+        <TagInput v-model="form.source" type="source">
+        </TagInput>
       </b-field>
       <!-- // source -->
 
       <!-- traceID -->
-      <b-field label="Trace ID" label-position="on-border">
+      <b-field label-position="on-border">
+        <template slot="label">Trace ID
+          <LableList></LableList>
+        </template>
+
         <b-taginput
           v-model="form.traceID"
           autocomplete
@@ -281,12 +242,14 @@
 import Vue from 'vue';
 import Sidebar from '@/components/Sidebar.vue';
 import TagInput from '@/components/TagInput.vue';
+import LableList from '@/components/LableList.vue';
 import { Param, Form, ParamValue } from '../../types/view';
 
 export default Vue.extend({
   components: {
     Sidebar,
     TagInput,
+    LableList,
   },
   data() {
     return {

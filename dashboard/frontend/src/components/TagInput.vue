@@ -4,7 +4,7 @@
       v-model="val"
       autocomplete
       :allow-new="true"
-      placeholder="Value"
+      :placeholder="type"
       icon="label"
       :data="data"
       @typing="getFilteredTags"
@@ -56,7 +56,12 @@ export default Vue.extend({
       Vue.axios
         .post(`/api/v1/suggest/${this.type}`, {})
         .then((response) => {
-          console.log(response.data.data);
+          if (!Array.isArray(response.data.data)) {
+            console.error('invalid response type'); // в теории это нафиг не нужно, но хз
+            return;
+          }
+
+          this.data = response.data.data;
         })
         .catch((e) => {
           console.error(e);
