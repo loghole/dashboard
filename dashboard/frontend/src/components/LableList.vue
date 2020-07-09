@@ -1,12 +1,11 @@
 <template>
   <b-dropdown aria-role="list">
     <span
-      v-html="operator"
       slot="trigger"
       role="button"
       style="cursor: pointer"
       class="has-text-success"
-    >
+    >{{operator}}
     </span>
 
     <b-dropdown-item aria-role="listitem" @click="setOperator('=')"
