@@ -6,67 +6,54 @@
 
     <div class="column page-menu">
       <!-- date -->
-      <b-field label="Start time" label-position="on-border">
-        <b-datetimepicker
-          placeholder="Click to select..."
-          :max-datetime="maxDatetime"
-          :timepicker="{ enableSeconds: true }"
-          editable
-          v-model="form.startTime"
-        ></b-datetimepicker>
-      </b-field>
-
-      <b-field label="End time" label-position="on-border">
-        <b-datetimepicker
-          placeholder="Click to select..."
-          :timepicker="{ enableSeconds: true }"
-          editable
-          v-model="form.endTime"
-        ></b-datetimepicker>
+      <b-field>
+        <DateTime
+          :startTime="form.startTime"
+          :end-time="form.endTime"
+          v-on:setStartTime="setStartTime"
+          v-on:setEndTime="setEndTime"
+        ></DateTime>
       </b-field>
       <!-- // date -->
 
       <!-- level -->
-      <b-field label-position="on-border">
-<!--    В идеале эту дичь "<template slot="label">Level" бы вынести тоже в компонент,
-        и будет четко, но у меня не вышло :С -->
-        <template slot="label">Level
-          <LableList></LableList>
-        </template>
+      <b-field label-position="on-border" class="is-relative">
+        <TagInput v-model="form.level" type="level"> </TagInput>
 
-        <TagInput v-model="form.level" type="level">
-        </TagInput>
+        <LableList
+          :isMultiple="true"
+          v-model="operator.level"
+          name="Level"
+        ></LableList>
       </b-field>
       <!-- // level -->
 
       <!-- namespace -->
-      <b-field label-position="on-border">
-        <template slot="label">Namespace
-          <LableList></LableList>
-        </template>
+      <b-field label-position="on-border" class="is-relative">
+        <TagInput v-model="form.namespace" type="namespace"> </TagInput>
 
-        <TagInput v-model="form.namespace" type="namespace">
-        </TagInput>
+        <LableList
+          :isMultiple="true"
+          v-model="operator.namespace"
+          name="Namespace"
+        ></LableList>
       </b-field>
       <!-- // namespace -->
 
       <!-- source -->
-      <b-field label-position="on-border">
-        <template slot="label">Source
-          <LableList></LableList>
-        </template>
+      <b-field label-position="on-border" class="is-relative">
+        <TagInput v-model="form.source" type="source"> </TagInput>
 
-        <TagInput v-model="form.source" type="source">
-        </TagInput>
+        <LableList
+          :isMultiple="true"
+          v-model="operator.source"
+          name="Source"
+        ></LableList>
       </b-field>
       <!-- // source -->
 
       <!-- traceID -->
-      <b-field label-position="on-border">
-        <template slot="label">Trace ID
-          <LableList></LableList>
-        </template>
-
+      <b-field label-position="on-border" class="is-relative">
         <b-taginput
           v-model="form.traceID"
           autocomplete
@@ -75,6 +62,12 @@
           icon="label"
         >
         </b-taginput>
+
+        <LableList
+          :isMultiple="true"
+          v-model="operator.traceID"
+          name="Trace ID"
+        ></LableList>
       </b-field>
       <!-- // traceID -->
 
@@ -113,8 +106,7 @@
       <template v-if="showAdditionalParam">
         <!-- host -->
         <b-field label="Host" label-position="on-border">
-          <TagInput v-model="form.host" type="host">
-          </TagInput>
+          <TagInput v-model="form.host" type="host"> </TagInput>
         </b-field>
         <!-- // host -->
 
@@ -243,17 +235,25 @@ import Vue from 'vue';
 import Sidebar from '@/components/Sidebar.vue';
 import TagInput from '@/components/TagInput.vue';
 import LableList from '@/components/LableList.vue';
-import { Param, Form, ParamValue } from '../../types/view';
+import DateTime from '@/components/DateTime.vue';
+import { Param, Form, ParamValue } from '@/types/view';
 
 export default Vue.extend({
   components: {
     Sidebar,
     TagInput,
     LableList,
+    DateTime,
   },
   data() {
     return {
       loading: true,
+      operator: {
+        level: '=' as string,
+        namespace: '=' as string,
+        source: '=' as string,
+        traceID: '=' as string,
+      },
       form: {
         startTime: new Date(new Date().getTime() - 1000 * 60 * 60 * 24),
         endTime: null,
@@ -298,6 +298,18 @@ export default Vue.extend({
     },
   },
   methods: {
+    setStartTime(val: Date): void {
+      this.form.startTime = val;
+    },
+    setEndTime(val: Date): void {
+      this.form.endTime = val;
+    },
+    setFormField(key: string, val: any): void {
+      this.form[key] = val;
+    },
+    setOperatorField(key: string, val: string): void {
+      this.operator[key] = val;
+    },
     getSourceList(val: string): void {
       console.log(val);
     },
@@ -382,7 +394,7 @@ export default Vue.extend({
           params.push({
             type: 'column',
             key: h.key,
-            operator: '=',
+            operator: this.operator[h.key] || '=',
             value: { list: h.value } as ParamValue,
           });
         }
@@ -396,6 +408,8 @@ export default Vue.extend({
           value: param.value,
         });
       });
+
+      console.log(this.form.startTime);
 
       Vue.axios
         .post('/api/v1/entry/list', { params, limit: 100 })
@@ -442,5 +456,9 @@ export default Vue.extend({
     max-width: 210px;
     min-width: 150px;
   }
+}
+
+.is-relative {
+  position: relative;
 }
 </style>

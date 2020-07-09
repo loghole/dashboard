@@ -1,7 +1,7 @@
 version: '3'
 services:
   clickhouse:
-    image: yandex/clickhouse-server:20.5.2.7
+    image: yandex/clickhouse-server
     volumes:
       - './data/clickhouse:/var/lib/clickhouse'
     ports:
@@ -88,7 +88,7 @@ services:
       - CLICKHOUSE_URI=clickhouse:9000
       - CLICKHOUSE_USER=
       - CLICKHOUSE_DATABASE=logs
-      - COUNT=10000
+      - COUNT=1000
       - SLEEP=5s
     depends_on:
       - dashboard_backend
