@@ -26,6 +26,10 @@ export default Vue.extend({
       type: String,
       required: true,
     },
+    withSuggestions: {
+      type: Boolean,
+      default: true,
+    },
   },
   data() {
     return {
@@ -69,7 +73,9 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.getFromServer();
+    if (this.withSuggestions) {
+      this.getFromServer();
+    }
   },
 });
 </script>

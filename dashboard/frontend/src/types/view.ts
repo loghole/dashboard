@@ -19,8 +19,8 @@ interface Form {
   traceID: string[];
   host: string[];
   level: string[];
-  buildCommit: string;
-  configHash: string;
+  buildCommit: string[];
+  configHash: string[];
   message: string;
 }
 

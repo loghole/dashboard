@@ -38,14 +38,11 @@
 
     <!-- traceID -->
     <b-field label-position="on-border" class="is-relative">
-      <b-taginput
+      <TagInput
         v-model="computedTraceValue"
-        autocomplete
-        :allow-new="true"
-        placeholder="Trace ID"
-        icon="label"
-      >
-      </b-taginput>
+        type="trace ID"
+        :with-suggestions="false">
+      </TagInput>
 
       <LableList
         :isMultiple="true"
@@ -53,7 +50,6 @@
         name="Trace ID"
       ></LableList>
     </b-field>
-<!--     // traceID -->
   </label>
 </template>
 
@@ -152,7 +148,7 @@ export default Vue.extend({
     },
     computedTraceValue: {
       get() {
-        return this.sourceValue;
+        return this.traceValue;
       },
       set(newValue) {
         this.$emit('setFormField', 'traceID', newValue);
@@ -160,7 +156,7 @@ export default Vue.extend({
     },
     computedTraceOperator: {
       get() {
-        return this.sourceOperator;
+        return this.traceOperator;
       },
       set(newValue) {
         this.$emit('setOperatorField', 'traceID', newValue);

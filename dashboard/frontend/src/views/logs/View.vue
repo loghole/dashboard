@@ -16,18 +16,22 @@
       </b-field>
       <!-- // date -->
 
-      <BaseMenuFields
-        v-on:setFormField="setFormField"
-        v-on:setOperatorField="setOperatorField"
-        :level-value="form.level"
-        :level-operator="operator.level"
-        :namespace-value="form.namespace"
-        :namespace-operator="operator.namespace"
-        :source-value="form.source"
-        :source-operator="operator.source"
-        :trace-value="form.traceID"
-        :trace-operator="operator.traceID">
-      </BaseMenuFields>
+      <!-- base fields -->
+      <b-field>
+        <BaseMenuFields
+          v-on:setFormField="setFormField"
+          v-on:setOperatorField="setOperatorField"
+          :level-value="form.level"
+          :level-operator="operator.level"
+          :namespace-value="form.namespace"
+          :namespace-operator="operator.namespace"
+          :source-value="form.source"
+          :source-operator="operator.source"
+          :trace-value="form.traceID"
+          :trace-operator="operator.traceID">
+        </BaseMenuFields>
+      </b-field>
+      <!-- // base fields -->
 
       <!-- params -->
       <b-field
@@ -63,34 +67,47 @@
 
       <template v-if="showAdditionalParam">
         <!-- host -->
-        <b-field label="Host" label-position="on-border">
+        <b-field label-position="on-border" class="is-relative">
           <TagInput v-model="form.host" type="host"> </TagInput>
+
+          <LableList
+            :isMultiple="true"
+            v-model="operator.host"
+            name="Host"
+          ></LableList>
+
         </b-field>
         <!-- // host -->
 
         <!-- Build commit -->
-        <b-field label="Build commit" label-position="on-border">
-          <b-taginput
+        <b-field label-position="on-border" class="is-relative">
+          <TagInput
             v-model="form.buildCommit"
-            autocomplete
-            :allow-new="true"
-            placeholder="Build commit"
-            icon="label"
-          >
-          </b-taginput>
+            type="build commit"
+            :with-suggestions="false">
+          ></TagInput>
+
+          <LableList
+            :isMultiple="true"
+            v-model="operator.buildCommit"
+            name="Build commit"
+          ></LableList>
         </b-field>
         <!-- // Build commit -->
 
         <!-- Config Hash -->
-        <b-field label="Config hash" label-position="on-border">
-          <b-taginput
+        <b-field label-position="on-border" class="is-relative">
+          <TagInput
             v-model="form.configHash"
-            autocomplete
-            :allow-new="true"
-            placeholder="Config hash"
-            icon="label"
-          >
-          </b-taginput>
+            type="build commit"
+            :with-suggestions="false">
+            ></TagInput>
+
+          <LableList
+            :isMultiple="true"
+            v-model="operator.configHash"
+            name="Config hash"
+          ></LableList>
         </b-field>
         <!-- // Config Hash -->
       </template>
@@ -192,6 +209,7 @@
 import Vue from 'vue';
 import Sidebar from '@/components/Sidebar.vue';
 import TagInput from '@/components/TagInput.vue';
+import LableList from '@/components/LableList.vue';
 import DateTime from '@/components/DateTime.vue';
 import BaseMenuFields from '@/components/BaseMenuFields.vue';
 import { Param, Form, ParamValue } from '@/types/view';
@@ -200,6 +218,7 @@ export default Vue.extend({
   components: {
     Sidebar,
     TagInput,
+    LableList,
     DateTime,
     BaseMenuFields,
   },
@@ -211,6 +230,9 @@ export default Vue.extend({
         namespace: '=' as string,
         source: '=' as string,
         traceID: '=' as string,
+        host: '=' as string,
+        buildCommit: '=' as string,
+        configHash: '=' as string,
       },
       form: {
         startTime: new Date(new Date().getTime() - 1000 * 60 * 60 * 24),
@@ -220,8 +242,8 @@ export default Vue.extend({
         traceID: [] as string[],
         host: [] as string[],
         level: [] as string[],
-        buildCommit: '',
-        configHash: '',
+        buildCommit: [] as string[],
+        configHash: [] as string[],
         message: '',
       } as Form,
       params: [] as Param[],
@@ -262,27 +284,11 @@ export default Vue.extend({
     setEndTime(val: Date): void {
       this.form.endTime = val;
     },
-    setFormField(key: string, val: any): void {
-      console.log(key, val);
-
+    setFormField(key: string, val: string[]): void {
       this.form[key] = val;
     },
     setOperatorField(key: string, val: string): void {
-      console.log(key, val);
-
       this.operator[key] = val;
-    },
-    getSourceList(val: string): void {
-      console.log(val);
-    },
-    getHostList(val: string): void {
-      console.log(val);
-    },
-    getNamespaceList(val: string): void {
-      console.log(val);
-    },
-    getLevelList(val: string): void {
-      console.log(val);
     },
     getFilteredTags(text: string) {
       this.filteredTags = this.tags.filter(
@@ -344,19 +350,19 @@ export default Vue.extend({
       }
 
       [
-        { key: 'namespace', value: this.form.namespace },
-        { key: 'level', value: this.form.level },
-        { key: 'source', value: this.form.source },
-        { key: 'trace_id', value: this.form.traceID },
-        { key: 'host', value: this.form.host },
-        { key: 'build_commit', value: this.form.buildCommit },
-        { key: 'config_hash', value: this.form.configHash },
+        { mapKey: 'namespace', key: 'namespace', value: this.form.namespace },
+        { mapKey: 'level', key: 'level', value: this.form.level },
+        { mapKey: 'source', key: 'source', value: this.form.source },
+        { mapKey: 'trace_id', key: 'trace_id', value: this.form.traceID },
+        { mapKey: 'host', key: 'host', value: this.form.host },
+        { mapKey: 'buildCommit', key: 'build_commit', value: this.form.buildCommit },
+        { mapKey: 'configHash', key: 'config_hash', value: this.form.configHash },
       ].forEach((h) => {
         if (h.value.length > 0) {
           params.push({
             type: 'column',
             key: h.key,
-            operator: this.operator[h.key] || '=',
+            operator: this.operator[h.mapKey] || '=',
             value: { list: h.value } as ParamValue,
           });
         }
@@ -371,7 +377,7 @@ export default Vue.extend({
         });
       });
 
-      console.log(this.form.startTime);
+      console.log(JSON.stringify(params));
 
       Vue.axios
         .post('/api/v1/entry/list', { params, limit: 100 })
