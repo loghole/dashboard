@@ -67,16 +67,18 @@
 
       <!-- menu additional param -->
       <template v-if="showAdditionalParam">
-        <MenuAdditionalParams
-          v-on:setFormField="setFormField"
-          v-on:setOperatorField="setOperatorField"
-          :build-commit-operator="operator.buildCommit"
-          :build-commit-value="form.buildCommit"
-          :config-hash-operator="operator.configHash"
-          :config-hash-value="form.configHash"
-          :host-operator="operator.host"
-          :host-value="form.host">
-        </MenuAdditionalParams>
+        <b-field>
+          <MenuAdditionalParams
+            v-on:setFormField="setFormField"
+            v-on:setOperatorField="setOperatorField"
+            :build-commit-operator="operator.buildCommit"
+            :build-commit-value="form.buildCommit"
+            :config-hash-operator="operator.configHash"
+            :config-hash-value="form.configHash"
+            :host-operator="operator.host"
+            :host-value="form.host">
+          </MenuAdditionalParams>
+        </b-field>
       </template>
       <!-- // menu additional param -->
 

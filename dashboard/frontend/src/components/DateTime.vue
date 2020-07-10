@@ -1,7 +1,7 @@
 <template>
   <label>
     <b-field>
-      <section >
+      <section>
         <b-field class="center">
           <b-radio-button
             v-model="type"
