@@ -28,7 +28,7 @@ export default Vue.extend({
     },
     withSuggestions: {
       type: Boolean,
-      default: true,
+      default: false,
     },
   },
   data() {

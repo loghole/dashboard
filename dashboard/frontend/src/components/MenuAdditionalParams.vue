@@ -4,7 +4,8 @@
     <b-field label-position="on-border" class="is-relative">
       <TagInput
         v-model="computedHostValue"
-        type="host">
+        type="host"
+        :with-suggestions="true">
       </TagInput>
 
       <LableList
@@ -20,7 +21,6 @@
       <TagInput
         v-model="computedBuildCommitValue"
         type="build commit"
-        :with-suggestions="false">
         ></TagInput>
 
       <LableList
@@ -36,7 +36,6 @@
       <TagInput
         v-model="computedConfigHashValue"
         type="config hash"
-        :with-suggestions="false">
         ></TagInput>
 
       <LableList
