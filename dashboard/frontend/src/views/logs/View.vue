@@ -16,9 +16,9 @@
       </b-field>
       <!-- // date -->
 
-      <!-- base fields -->
+      <!-- menu default params -->
       <b-field>
-        <BaseMenuFields
+        <MenuDefaultParams
           v-on:setFormField="setFormField"
           v-on:setOperatorField="setOperatorField"
           :level-value="form.level"
@@ -29,9 +29,9 @@
           :source-operator="operator.source"
           :trace-value="form.traceID"
           :trace-operator="operator.traceID">
-        </BaseMenuFields>
+        </MenuDefaultParams>
       </b-field>
-      <!-- // base fields -->
+      <!-- // menu default params -->
 
       <!-- params -->
       <b-field
@@ -65,52 +65,20 @@
       </b-field>
       <!-- // params -->
 
+      <!-- menu additional param -->
       <template v-if="showAdditionalParam">
-        <!-- host -->
-        <b-field label-position="on-border" class="is-relative">
-          <TagInput v-model="form.host" type="host"> </TagInput>
-
-          <LableList
-            :isMultiple="true"
-            v-model="operator.host"
-            name="Host"
-          ></LableList>
-
-        </b-field>
-        <!-- // host -->
-
-        <!-- Build commit -->
-        <b-field label-position="on-border" class="is-relative">
-          <TagInput
-            v-model="form.buildCommit"
-            type="build commit"
-            :with-suggestions="false">
-          ></TagInput>
-
-          <LableList
-            :isMultiple="true"
-            v-model="operator.buildCommit"
-            name="Build commit"
-          ></LableList>
-        </b-field>
-        <!-- // Build commit -->
-
-        <!-- Config Hash -->
-        <b-field label-position="on-border" class="is-relative">
-          <TagInput
-            v-model="form.configHash"
-            type="build commit"
-            :with-suggestions="false">
-            ></TagInput>
-
-          <LableList
-            :isMultiple="true"
-            v-model="operator.configHash"
-            name="Config hash"
-          ></LableList>
-        </b-field>
-        <!-- // Config Hash -->
+        <MenuAdditionalParams
+          v-on:setFormField="setFormField"
+          v-on:setOperatorField="setOperatorField"
+          :build-commit-operator="operator.buildCommit"
+          :build-commit-value="form.buildCommit"
+          :config-hash-operator="operator.configHash"
+          :config-hash-value="form.configHash"
+          :host-operator="operator.host"
+          :host-value="form.host">
+        </MenuAdditionalParams>
       </template>
+      <!-- // menu additional param -->
 
       <div class="buttons is-centered">
         <button
@@ -208,19 +176,17 @@
 <script lang="ts">
 import Vue from 'vue';
 import Sidebar from '@/components/Sidebar.vue';
-import TagInput from '@/components/TagInput.vue';
-import LableList from '@/components/LableList.vue';
 import DateTime from '@/components/DateTime.vue';
-import BaseMenuFields from '@/components/BaseMenuFields.vue';
+import MenuDefaultParams from '@/components/MenuDefaultParams.vue';
+import MenuAdditionalParams from '@/components/MenuAdditionalParams.vue';
 import { Param, Form, ParamValue } from '@/types/view';
 
 export default Vue.extend({
   components: {
     Sidebar,
-    TagInput,
-    LableList,
     DateTime,
-    BaseMenuFields,
+    MenuDefaultParams,
+    MenuAdditionalParams,
   },
   data() {
     return {

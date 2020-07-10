@@ -2,7 +2,7 @@
   <label>
     <!-- level -->
     <b-field label-position="on-border" class="is-relative">
-      <TagInput v-model="computedLevelValue" type="level"> </TagInput>
+      <TagInput v-model="computedLevelValue" type="level"></TagInput>
 
       <LableList
         :isMultiple="true"
@@ -14,7 +14,7 @@
 
     <!-- namespace -->
     <b-field label-position="on-border" class="is-relative">
-      <TagInput v-model="computedNamespaceValue" type="namespace"> </TagInput>
+      <TagInput v-model="computedNamespaceValue" type="namespace"></TagInput>
 
       <LableList
         :isMultiple="true"
@@ -26,7 +26,7 @@
 
     <!-- source -->
     <b-field label-position="on-border" class="is-relative">
-      <TagInput v-model="computedSourceValue" type="source"> </TagInput>
+      <TagInput v-model="computedSourceValue" type="source"></TagInput>
 
       <LableList
         :isMultiple="true"
@@ -40,7 +40,7 @@
     <b-field label-position="on-border" class="is-relative">
       <TagInput
         v-model="computedTraceValue"
-        type="trace ID"
+        type="trace id"
         :with-suggestions="false">
       </TagInput>
 
@@ -50,6 +50,7 @@
         name="Trace ID"
       ></LableList>
     </b-field>
+    <!-- // traceID -->
   </label>
 </template>
 
