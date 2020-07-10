@@ -24,6 +24,4 @@ interface Form {
   message: string;
 }
 
-
-
 export { Param, Form, ParamValue }

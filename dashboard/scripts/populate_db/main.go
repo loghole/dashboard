@@ -76,7 +76,7 @@ func main() {
 			continue
 		}
 
-		time.Sleep(time.Millisecond * 3)
+		time.Sleep(time.Millisecond * 10)
 	}
 
 	log.Println("success")

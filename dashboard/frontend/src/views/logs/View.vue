@@ -16,60 +16,18 @@
       </b-field>
       <!-- // date -->
 
-      <!-- level -->
-      <b-field label-position="on-border" class="is-relative">
-        <TagInput v-model="form.level" type="level"> </TagInput>
-
-        <LableList
-          :isMultiple="true"
-          v-model="operator.level"
-          name="Level"
-        ></LableList>
-      </b-field>
-      <!-- // level -->
-
-      <!-- namespace -->
-      <b-field label-position="on-border" class="is-relative">
-        <TagInput v-model="form.namespace" type="namespace"> </TagInput>
-
-        <LableList
-          :isMultiple="true"
-          v-model="operator.namespace"
-          name="Namespace"
-        ></LableList>
-      </b-field>
-      <!-- // namespace -->
-
-      <!-- source -->
-      <b-field label-position="on-border" class="is-relative">
-        <TagInput v-model="form.source" type="source"> </TagInput>
-
-        <LableList
-          :isMultiple="true"
-          v-model="operator.source"
-          name="Source"
-        ></LableList>
-      </b-field>
-      <!-- // source -->
-
-      <!-- traceID -->
-      <b-field label-position="on-border" class="is-relative">
-        <b-taginput
-          v-model="form.traceID"
-          autocomplete
-          :allow-new="true"
-          placeholder="Trace ID"
-          icon="label"
-        >
-        </b-taginput>
-
-        <LableList
-          :isMultiple="true"
-          v-model="operator.traceID"
-          name="Trace ID"
-        ></LableList>
-      </b-field>
-      <!-- // traceID -->
+      <BaseMenuFields
+        v-on:setFormField="setFormField"
+        v-on:setOperatorField="setOperatorField"
+        :level-value="form.level"
+        :level-operator="operator.level"
+        :namespace-value="form.namespace"
+        :namespace-operator="operator.namespace"
+        :source-value="form.source"
+        :source-operator="operator.source"
+        :trace-value="form.traceID"
+        :trace-operator="operator.traceID">
+      </BaseMenuFields>
 
       <!-- params -->
       <b-field
@@ -234,16 +192,16 @@
 import Vue from 'vue';
 import Sidebar from '@/components/Sidebar.vue';
 import TagInput from '@/components/TagInput.vue';
-import LableList from '@/components/LableList.vue';
 import DateTime from '@/components/DateTime.vue';
+import BaseMenuFields from '@/components/BaseMenuFields.vue';
 import { Param, Form, ParamValue } from '@/types/view';
 
 export default Vue.extend({
   components: {
     Sidebar,
     TagInput,
-    LableList,
     DateTime,
+    BaseMenuFields,
   },
   data() {
     return {
@@ -305,9 +263,13 @@ export default Vue.extend({
       this.form.endTime = val;
     },
     setFormField(key: string, val: any): void {
+      console.log(key, val);
+
       this.form[key] = val;
     },
     setOperatorField(key: string, val: string): void {
+      console.log(key, val);
+
       this.operator[key] = val;
     },
     getSourceList(val: string): void {
