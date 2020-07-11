@@ -16,6 +16,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import FilterTags from '@/plugins/filter';
 
 export default Vue.extend({
   props: {
@@ -42,7 +43,7 @@ export default Vue.extend({
   },
   data() {
     return {
-      data: [] as string[],
+      tags: [] as string[],
       text: '' as string,
     };
   },
@@ -59,12 +60,7 @@ export default Vue.extend({
       return this.type !== '';
     },
     filteredTags() {
-      return this.data.filter(
-        (option) => option
-          .toString()
-          .toLowerCase()
-          .indexOf(this.text.toLowerCase()) >= 0,
-      );
+      return FilterTags(this.tags, this.value, this.text);
     },
   },
   methods: {
@@ -80,7 +76,7 @@ export default Vue.extend({
             return;
           }
 
-          this.data = response.data.data;
+          this.tags = response.data.data;
         })
         .catch((e) => {
           console.error(e);
