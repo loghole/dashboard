@@ -73,7 +73,7 @@ export default Vue.extend({
     },
     getFromServer() {
       Vue.axios
-        .post(`/api/v1/suggest/${this.type}`)
+        .post(`/api/v1/suggest/${this.type}`, {})
         .then((response) => {
           if (!Array.isArray(response.data.data)) {
             console.error('invalid response type', response);

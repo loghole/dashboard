@@ -1,5 +1,7 @@
-const OperatorsSingle = ['<', '<=', '>', '>=', '=', '!=', 'LIKE', 'NOT LIKE'] as string[];
+const OperatorMultiple = ['=', '!=', 'LIKE', 'NOT LIKE'] as string[];
 
-const OperatorMultiple = ['=', '!=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN'] as string[];
+const SingleParam = ['<', '<=', '>', '>='] as string[];
 
-export { OperatorsSingle, OperatorMultiple };
+const OperatorsSingle = OperatorMultiple.concat(SingleParam) as string[];
+
+export { OperatorsSingle, OperatorMultiple, SingleParam };

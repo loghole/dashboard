@@ -1,5 +1,5 @@
 <template>
-  <label>
+  <div>
     <b-field
       label-position="on-border"
       class="is-relative"
@@ -21,7 +21,7 @@
         :name="item.name"
       ></LableList>
     </b-field>
-  </label>
+  </div>
 </template>
 
 <script lang="ts">

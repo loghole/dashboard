@@ -1,7 +1,7 @@
 <template>
   <div class="columns p-2 pt-4">
-    <!-- add param -->
-    <Sidebar v-model="showAddParam" v-on:save="saveParam"></Sidebar>
+    <!-- add param
+    <Sidebar v-model="showAddParam" v-on:save="saveParam"></Sidebar> -->
     <!-- add param -->
 
     <div class="column page-menu">
@@ -30,35 +30,15 @@
       <!-- // menu default params -->
 
       <!-- params -->
-      <b-field
+      <JSONValue
         v-for="(param, i) in params"
-        :label="`${param.key} ${param.operator}`"
         :key="`param_${i}`"
-        label-position="on-border"
-      >
-        <b-taginput
-          v-if="isListValue(param.operator)"
-          v-model="param.value.list"
-          autocomplete
-          :allow-new="true"
-          placeholder="Value"
-          icon="label"
-          icon-right="close-circle"
-          icon-right-clickable
-          @icon-right-click="removeParam(i)"
-        >
-        </b-taginput>
-        <b-input
-          v-else
-          :placeholder="param.key"
-          v-model="param.value.item"
-          type="text"
-          icon-right="close-circle"
-          icon-right-clickable
-          @icon-right-click="removeParam(i)"
-        >
-        </b-input>
-      </b-field>
+        :param="param"
+        :index="i"
+        v-on:setJSONField="setJSONField"
+        v-on:setJSONOperator="setJSONOperator"
+        v-on:deleteJSONParam="deleteJSONParam"
+      ></JSONValue>
       <!-- // params -->
 
       <!-- menu additional param -->
@@ -75,6 +55,18 @@
       </template>
       <!-- // menu additional param -->
 
+      <b-field v-if="showAddParam">
+        <b-input
+          v-model="newParamName"
+          placeholder="new param name"
+          type="text"
+        >
+        </b-input>
+        <p class="control">
+          <button class="button is-primary" @click="saveParam">Add</button>
+        </p>
+      </b-field>
+
       <div class="buttons is-centered">
         <button
           class="button is-small is-outlined"
@@ -87,13 +79,13 @@
           </b-icon>
           <span>other</span>
         </button>
-        <button
-          class="button is-small is-outlined"
-          @click="showAddParam = true"
-        >
+
+        <!-- add param -->
+        <button class="button is-small is-outlined" @click="newParam">
           <b-icon icon="plus" size="is-small"> </b-icon>
           <span>param</span>
         </button>
+        <!-- // add param -->
       </div>
       <b-button class="button is-primary is-fullwidth" @click="search"
         >Search</b-button
@@ -170,18 +162,20 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import Sidebar from '@/components/Sidebar.vue';
 import DateTime from '@/components/DateTime.vue';
-import Menu from '@/components/Menu.vue';
+import Menu from '@/components/menu/Menu.vue';
+import JSONValue from '@/components/menu/JSONValue.vue';
 import {
   Param, Form, ParamValue, SearchParam,
 } from '@/types/view';
 
+import { SingleParam } from '@/const/const';
+
 export default Vue.extend({
   components: {
-    Sidebar,
     DateTime,
     Menu,
+    JSONValue,
   },
   data() {
     return {
@@ -218,8 +212,12 @@ export default Vue.extend({
         { key: 'buildCommit', name: 'Build commit' },
         { key: 'configHash', name: 'Config hash' },
       ] as SearchParam[],
-      // TODO drop..?
       params: [] as Param[],
+      showAddParam: false,
+      newParamName: '',
+
+      // TODO drop..?
+
       param: {
         operator: '',
         type: '',
@@ -237,7 +235,6 @@ export default Vue.extend({
       tags: [] as string[],
       filteredTags: [] as string[],
       operators: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
-      showAddParam: false,
       showAdditionalParam: false,
       messages: [],
       showTags: ['trace_id'],
@@ -251,6 +248,25 @@ export default Vue.extend({
     },
   },
   methods: {
+    saveParam(): void {
+      this.showAddParam = false;
+
+      if (this.params.findIndex((p) => p.key === this.newParamName) !== -1) {
+        // TODO higlight this param // 5 sec
+        return;
+      }
+
+      this.params.push({
+        type: 'json',
+        key: this.newParamName,
+        value: { item: '', list: [] as string[] },
+        operator: '=',
+      });
+    },
+    newParam() {
+      this.showAddParam = true;
+      this.newParamName = '';
+    },
     setStartTime(val: Date): void {
       this.form.startTime = val;
     },
@@ -263,6 +279,29 @@ export default Vue.extend({
     setOperatorField(key: string, val: string): void {
       this.operator[key] = val;
     },
+    setJSONField(idx: number, val: (string|string[])): void {
+      if (typeof val === 'string') {
+        this.params[idx].value.item = val;
+        return;
+      }
+
+      this.params[idx].value.list = val;
+    },
+    setJSONOperator(idx: number, val: string): void {
+      if (!SingleParam.includes(this.params[idx].operator) === SingleParam.includes(val)) {
+        this.params[idx].value.list = [];
+        this.params[idx].value.item = '';
+      }
+
+      this.params[idx].operator = val;
+    },
+    deleteJSONParam(idx: number): void {
+      this.$nextTick(() => {
+        this.params = this.params.filter((v, i) => i !== idx);
+      });
+    },
+
+    // TODO drop it...?
     getFilteredTags(text: string) {
       this.filteredTags = this.tags.filter(
         (option) => option
@@ -270,21 +309,6 @@ export default Vue.extend({
           .toLowerCase()
           .indexOf(text.toLowerCase()) >= 0,
       );
-    },
-    saveParam(param: Param): void {
-      this.showAddParam = false;
-
-      this.params.push({
-        type: param.type,
-        key: param.key,
-        value: param.value,
-        operator: param.operator,
-      });
-    },
-    removeParam(idx: number): void {
-      this.$nextTick(() => {
-        this.params = this.params.filter((v, i) => i !== idx);
-      });
     },
     isListValue(operator: string): boolean {
       return ['=', '!=', 'LIKE', 'NOT LIKE'].includes(operator);
