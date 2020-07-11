@@ -2,11 +2,12 @@
   <div>
     <b-taginput
       v-model="val"
-      autocomplete
-      :allow-new="true"
-      :placeholder="type"
-      icon="label"
-      :data="data"
+      :autocomplete="autocomplete"
+      :open-on-focus="autocomplete"
+      :allow-new="allowNew"
+      :placeholder="placeholder"
+      :icon="icon"
+      :data="filteredTags"
       @typing="getFilteredTags"
     >
     </b-taginput>
@@ -24,17 +25,25 @@ export default Vue.extend({
     },
     type: {
       type: String,
-      required: true,
+      default: '',
     },
-    withSuggestions: {
+    allowNew: {
       type: Boolean,
-      default: false,
+      default: true,
+    },
+    placeholder: {
+      type: String,
+      default: 'value',
+    },
+    icon: {
+      type: String,
+      default: 'label',
     },
   },
   data() {
     return {
       data: [] as string[],
-      filteredTags: [] as string[],
+      text: '' as string,
     };
   },
   computed: {
@@ -46,22 +55,28 @@ export default Vue.extend({
         this.$emit('input', newValue);
       },
     },
-  },
-  methods: {
-    getFilteredTags(text: string) {
-      this.filteredTags = this.data.filter(
+    autocomplete() {
+      return this.type !== '';
+    },
+    filteredTags() {
+      return this.data.filter(
         (option) => option
           .toString()
           .toLowerCase()
-          .indexOf(text.toLowerCase()) >= 0,
+          .indexOf(this.text.toLowerCase()) >= 0,
       );
+    },
+  },
+  methods: {
+    getFilteredTags(text: string) {
+      this.text = text;
     },
     getFromServer() {
       Vue.axios
-        .post(`/api/v1/suggest/${this.type}`, {})
+        .post(`/api/v1/suggest/${this.type}`)
         .then((response) => {
           if (!Array.isArray(response.data.data)) {
-            console.error('invalid response type'); // в теории это нафиг не нужно, но хз
+            console.error('invalid response type', response);
             return;
           }
 
@@ -73,7 +88,7 @@ export default Vue.extend({
     },
   },
   mounted() {
-    if (this.withSuggestions) {
+    if (this.autocomplete) {
       this.getFromServer();
     }
   },

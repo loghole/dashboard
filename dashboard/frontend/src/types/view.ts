@@ -24,4 +24,10 @@ interface Form {
   message: string;
 }
 
-export { Param, Form, ParamValue }
+interface SearchParam {
+  key: string;
+  name: string;
+  type: string;
+}
+
+export { Param, Form, ParamValue, SearchParam }

@@ -18,18 +18,14 @@
 
       <!-- menu default params -->
       <b-field>
-        <MenuDefaultParams
+        <Menu
           v-on:setFormField="setFormField"
           v-on:setOperatorField="setOperatorField"
-          :level-value="form.level"
-          :level-operator="operator.level"
-          :namespace-value="form.namespace"
-          :namespace-operator="operator.namespace"
-          :source-value="form.source"
-          :source-operator="operator.source"
-          :trace-value="form.traceID"
-          :trace-operator="operator.traceID">
-        </MenuDefaultParams>
+          :form="form"
+          :operator="operator"
+          :params="defaultParams"
+        >
+        </Menu>
       </b-field>
       <!-- // menu default params -->
 
@@ -68,16 +64,13 @@
       <!-- menu additional param -->
       <template v-if="showAdditionalParam">
         <b-field>
-          <MenuAdditionalParams
+          <Menu
             v-on:setFormField="setFormField"
             v-on:setOperatorField="setOperatorField"
-            :build-commit-operator="operator.buildCommit"
-            :build-commit-value="form.buildCommit"
-            :config-hash-operator="operator.configHash"
-            :config-hash-value="form.configHash"
-            :host-operator="operator.host"
-            :host-value="form.host">
-          </MenuAdditionalParams>
+            :form="form"
+            :operator="operator"
+            :params="additionalParams"
+          ></Menu>
         </b-field>
       </template>
       <!-- // menu additional param -->
@@ -179,16 +172,16 @@
 import Vue from 'vue';
 import Sidebar from '@/components/Sidebar.vue';
 import DateTime from '@/components/DateTime.vue';
-import MenuDefaultParams from '@/components/MenuDefaultParams.vue';
-import MenuAdditionalParams from '@/components/MenuAdditionalParams.vue';
-import { Param, Form, ParamValue } from '@/types/view';
+import Menu from '@/components/Menu.vue';
+import {
+  Param, Form, ParamValue, SearchParam,
+} from '@/types/view';
 
 export default Vue.extend({
   components: {
     Sidebar,
     DateTime,
-    MenuDefaultParams,
-    MenuAdditionalParams,
+    Menu,
   },
   data() {
     return {
@@ -214,6 +207,18 @@ export default Vue.extend({
         configHash: [] as string[],
         message: '',
       } as Form,
+      defaultParams: [
+        { key: 'level', name: 'Level', type: 'level' },
+        { key: 'namespace', name: 'Namespace', type: 'namespace' },
+        { key: 'source', name: 'Source', type: 'source' },
+        { key: 'traceID', name: 'Trace ID' },
+      ] as SearchParam[],
+      additionalParams: [
+        { key: 'host', name: 'Host', type: 'host' },
+        { key: 'buildCommit', name: 'Build commit' },
+        { key: 'configHash', name: 'Config hash' },
+      ] as SearchParam[],
+      // TODO drop..?
       params: [] as Param[],
       param: {
         operator: '',
@@ -323,8 +328,16 @@ export default Vue.extend({
         { mapKey: 'source', key: 'source', value: this.form.source },
         { mapKey: 'trace_id', key: 'trace_id', value: this.form.traceID },
         { mapKey: 'host', key: 'host', value: this.form.host },
-        { mapKey: 'buildCommit', key: 'build_commit', value: this.form.buildCommit },
-        { mapKey: 'configHash', key: 'config_hash', value: this.form.configHash },
+        {
+          mapKey: 'buildCommit',
+          key: 'build_commit',
+          value: this.form.buildCommit,
+        },
+        {
+          mapKey: 'configHash',
+          key: 'config_hash',
+          value: this.form.configHash,
+        },
       ].forEach((h) => {
         if (h.value.length > 0) {
           params.push({

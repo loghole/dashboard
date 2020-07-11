@@ -42,6 +42,16 @@ func main() {
 `
 
 	log.Println("start")
+	tx, err := db.Begin()
+	if err != nil {
+		log.Println("Begin", err)
+		return
+	}
+
+	stmt, err := tx.Prepare(query)
+	if err != nil {
+		return
+	}
 
 	for i := 0; i < viper.GetInt("COUNT"); i++ {
 		entry, err := generator.GenerateEntry()
@@ -50,13 +60,7 @@ func main() {
 			continue
 		}
 
-		tx, err := db.Begin()
-		if err != nil {
-			log.Println("Begin", err)
-			continue
-		}
-
-		_, err = tx.Exec(query,
+		_, err = stmt.Exec(
 			entry.Namespace,
 			entry.Source,
 			entry.Host,
@@ -70,13 +74,11 @@ func main() {
 			log.Println("Exec", err)
 			continue
 		}
+	}
 
-		if err = tx.Commit(); err != nil {
-			log.Println("Commit", err)
-			continue
-		}
-
-		time.Sleep(time.Millisecond * 10)
+	if err = tx.Commit(); err != nil {
+		log.Println("Commit", err)
+		return
 	}
 
 	log.Println("success")
