@@ -24,7 +24,7 @@ func main() {
 	writer, err := lhw.NewWriter(lhw.Config{
 		NodeURIs: []string{viper.GetString("COLLECTOR_URI")},
 		Insecure: true,
-		Logger:   log.New(os.Stdout, "", log.Ldate),
+		Logger:   log.New(os.Stdout, "", log.LstdFlags),
 	})
 	if err != nil {
 		log.Fatalln("init writer failed", err)
@@ -35,10 +35,12 @@ func main() {
 	// init logger
 	logger := zap.New(zapcore.NewCore(
 		getEncoder(),
-		zapcore.NewMultiWriteSyncer(zapcore.AddSync(writer), os.Stdout),
+		zapcore.NewMultiWriteSyncer(zapcore.AddSync(writer)),
 		zapcore.DebugLevel)).Sugar()
 
 	generator := NewErrorGenerator()
+
+	log.Println("start write logs")
 
 	for i := 0; i < viper.GetInt("COUNT"); i++ {
 		entry, err := generator.GenerateEntry()
@@ -68,6 +70,8 @@ func main() {
 		case "error":
 			l.Error(entry.Message)
 		}
+
+		time.Sleep(time.Millisecond * 5)
 	}
 
 	log.Println("success")
