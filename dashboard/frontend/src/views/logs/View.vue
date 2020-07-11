@@ -55,17 +55,20 @@
       </template>
       <!-- // menu additional param -->
 
+      <!-- add new param  -->
       <b-field v-if="showAddParam">
         <b-input
           v-model="newParamName"
           placeholder="new param name"
           type="text"
+          @keydown.native.enter="saveParam"
         >
         </b-input>
         <p class="control">
           <button class="button is-primary" @click="saveParam">Add</button>
         </p>
       </b-field>
+      <!-- // add new param  -->
 
       <div class="buttons is-centered">
         <button
@@ -94,6 +97,7 @@
 
     <div class="column">
       <div class="columns">
+        <!-- Showed tags -->
         <div class="column">
           <b-taginput
             v-model="showTags"
@@ -107,6 +111,8 @@
           >
           </b-taginput>
         </div>
+        <!-- // Showed tags -->
+
         <div class="column">
           <b-field label="Search" label-position="on-border">
             <b-input
@@ -170,6 +176,7 @@ import {
 } from '@/types/view';
 
 import { SingleParam } from '@/const/const';
+import FilterTags from '@/plugins/filter';
 
 export default Vue.extend({
   components: {
@@ -215,6 +222,7 @@ export default Vue.extend({
       params: [] as Param[],
       showAddParam: false,
       newParamName: '',
+      tagsInput: '',
 
       // TODO drop..?
 
@@ -233,7 +241,6 @@ export default Vue.extend({
       namespaces: [],
       levels: [],
       tags: [] as string[],
-      filteredTags: [] as string[],
       operators: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
       showAdditionalParam: false,
       messages: [],
@@ -245,6 +252,9 @@ export default Vue.extend({
       return this.operators.filter(
         (option: string) => option.toLowerCase().indexOf(this.param.operator.toLowerCase()) >= 0,
       );
+    },
+    filteredTags(): string[] {
+      return FilterTags(this.tags, this.showTags, this.tagsInput);
     },
   },
   methods: {
@@ -279,7 +289,7 @@ export default Vue.extend({
     setOperatorField(key: string, val: string): void {
       this.operator[key] = val;
     },
-    setJSONField(idx: number, val: (string|string[])): void {
+    setJSONField(idx: number, val: string | string[]): void {
       if (typeof val === 'string') {
         this.params[idx].value.item = val;
         return;
@@ -288,7 +298,10 @@ export default Vue.extend({
       this.params[idx].value.list = val;
     },
     setJSONOperator(idx: number, val: string): void {
-      if (!SingleParam.includes(this.params[idx].operator) === SingleParam.includes(val)) {
+      if (
+        !SingleParam.includes(this.params[idx].operator)
+        === SingleParam.includes(val)
+      ) {
         this.params[idx].value.list = [];
         this.params[idx].value.item = '';
       }
@@ -300,16 +313,12 @@ export default Vue.extend({
         this.params = this.params.filter((v, i) => i !== idx);
       });
     },
-
-    // TODO drop it...?
     getFilteredTags(text: string) {
-      this.filteredTags = this.tags.filter(
-        (option) => option
-          .toString()
-          .toLowerCase()
-          .indexOf(text.toLowerCase()) >= 0,
-      );
+    // console.log(this.tags, this.filteredTags);
+      //   this.filteredTags = FilterTags(this.tags, this.filteredTags, text);
+      this.tagsInput = text;
     },
+    // TODO drop it...?
     isListValue(operator: string): boolean {
       return ['=', '!=', 'LIKE', 'NOT LIKE'].includes(operator);
     },
@@ -408,6 +417,20 @@ export default Vue.extend({
 
       this.tags = Object.keys(h);
     },
+  },
+  mounted() {
+    Vue.axios
+      .post('/api/v1/entry/list', { limit: 100 })
+      .then((response) => {
+        this.messages = response.data.data;
+
+        this.setTags(response.data.data);
+
+        console.log(response.data);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   },
 });
 </script>
