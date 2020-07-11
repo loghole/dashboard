@@ -85,9 +85,7 @@ services:
     working_dir: /app/populate_db/
     command: go run main.go
     environment:
-      - CLICKHOUSE_URI=clickhouse:9000
-      - CLICKHOUSE_USER=
-      - CLICKHOUSE_DATABASE=logs
+      - COLLECTOR_URI=http://collector:8080
       - COUNT=1000
       - SLEEP=5s
     depends_on:
