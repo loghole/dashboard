@@ -130,38 +130,12 @@
         </div>
       </div>
 
-      <div class="table-container" v-if="messages.length > 0">
-        <table class="table is-striped is-narrow is-hoverable is-fullwidth">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Level</th>
-              <th>Message</th>
-              <th v-for="(tag, i) in showTags" :key="`header_${i}`">
-                {{ tag }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(message, i) in messages" :key="`message_${i}`">
-              <td style="max-width: 166px">
-                {{ new Date(message.time).toLocaleString() }}
-              </td>
-              <td>{{ message.level.toUpperCase() }}</td>
-              <td>{{ message.message }}</td>
-              <td v-for="(tag, i) in showTags" :key="`tag_${i}`">
-                {{ message[tag] }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <b-skeleton
-        size="is-large"
-        :active="loading"
-        :count="20"
-        v-else
-      ></b-skeleton>
+      <!-- entry table -->
+      <EntryTable
+        :activeTags="showTags"
+        :messages="messages"
+      ></EntryTable>
+      <!-- // entry table -->
     </div>
   </div>
 </template>
@@ -170,6 +144,7 @@
 import Vue from 'vue';
 import DateTime from '@/components/DateTime.vue';
 import Menu from '@/components/menu/Menu.vue';
+import EntryTable from '@/components/messages/EntryTable.vue';
 import JSONValue from '@/components/menu/JSONValue.vue';
 import {
   Param, Form, ParamValue, SearchParam,
@@ -182,11 +157,11 @@ export default Vue.extend({
   components: {
     DateTime,
     Menu,
+    EntryTable,
     JSONValue,
   },
   data() {
     return {
-      loading: true,
       operator: {
         level: '=' as string,
         namespace: '=' as string,
@@ -244,7 +219,7 @@ export default Vue.extend({
       operators: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
       showAdditionalParam: false,
       messages: [],
-      showTags: ['trace_id'],
+      showTags: ['level', 'message'],
     };
   },
   computed: {
