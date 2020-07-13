@@ -144,7 +144,7 @@
 import Vue from 'vue';
 import DateTime from '@/components/DateTime.vue';
 import Menu from '@/components/menu/Menu.vue';
-import EntryTable from '@/components/messages/EntryTable.vue';
+import EntryTable from '@/components/entry/EntryTable.vue';
 import JSONValue from '@/components/menu/JSONValue.vue';
 import {
   Param, Form, ParamValue, SearchParam,
@@ -219,7 +219,7 @@ export default Vue.extend({
       operators: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
       showAdditionalParam: false,
       messages: [],
-      showTags: ['level', 'message'],
+      showTags: [],
     };
   },
   computed: {
