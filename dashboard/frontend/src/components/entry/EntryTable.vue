@@ -12,7 +12,7 @@
       <tbody>
       <template v-for="(message, i) in messages">
         <tr :key="`message_${i}`">
-          <td style="max-width: 166px">{{ buildDatetime(message.time) }}</td>
+          <td style="width: 166px">{{ buildDatetime(message.time) }}</td>
           <td v-for="(tag, i) in activeTags" :key="`tag_${i}`">
             {{ prepareText(tag, message[tag]) }}
           </td>
@@ -38,8 +38,8 @@
       </thead>
       <tbody>
         <tr v-for="(message, i) in messages" :key="`message_${i}`">
-          <td style="max-width: 166px">{{ buildDatetime(message.time) }}</td>
-          <td style="max-width: 800px">
+          <td style="width: 166px">{{ buildDatetime(message.time) }}</td>
+          <td>
             <b-taglist attached>
               <span
                 v-for="(value, name, i) in message"
@@ -51,7 +51,7 @@
                 </b-tag>
                 <b-tag
                   v-if="showField(name)">
-                  {{ value }}
+                  {{ prepareText(name, value) }}
                 </b-tag>
               </span>
             </b-taglist>
