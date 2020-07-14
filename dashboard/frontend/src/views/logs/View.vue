@@ -130,11 +130,11 @@
         </div>
       </div>
 
-      <!-- entry table -->
-      <EntryTable
+      <!-- messages table -->
+      <MessagesTable
         :activeTags="showTags"
         :messages="messages"
-      ></EntryTable>
+      ></MessagesTable>
       <!-- // entry table -->
     </div>
   </div>
@@ -144,7 +144,7 @@
 import Vue from 'vue';
 import DateTime from '@/components/DateTime.vue';
 import Menu from '@/components/menu/Menu.vue';
-import EntryTable from '@/components/entry/EntryTable.vue';
+import MessagesTable from '@/components/messages/MessagesTable.vue';
 import JSONValue from '@/components/menu/JSONValue.vue';
 import {
   Param, Form, ParamValue, SearchParam,
@@ -157,7 +157,7 @@ export default Vue.extend({
   components: {
     DateTime,
     Menu,
-    EntryTable,
+    MessagesTable,
     JSONValue,
   },
   data() {
