@@ -3,6 +3,7 @@
     <table class="table is-striped is-narrow is-hoverable is-fullwidth">
       <thead>
       <tr>
+        <th style="width: 24px"></th>
         <th>Time</th>
         <template v-if="activeTags.length > 0">
           <th v-for="(tag, i) in activeTags" :key="i">

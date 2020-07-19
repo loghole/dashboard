@@ -1,35 +1,57 @@
 <template>
-  <tr>
-    <td style="width: 166px">{{ buildDatetime(message.time) }}</td>
-    <template v-if="activeTags.length > 0">
-      <td v-for="(tag, i) in activeTags" :key="`tag_${i}`">
-        {{ prepareText(tag, message[tag]) }}
+  <!-- нужная штука для таблиц, нашел в https://github.com/vuejs/vue/issues/5758-->
+  <fragment>
+    <tr>
+      <td>
+        <button aria-expanded="true" aria-label="Toggle row details" class="btn" @click="showJSON">
+          <!-- TODO: fix it? -->
+          <b-icon v-if="jsonBlockIsShowed" icon="menu-down"></b-icon>
+          <b-icon v-else icon="menu-down-outline"></b-icon>
+        </button>
       </td>
-    </template>
-    <template v-else>
-      <b-taglist attached>
-        <span
-          v-for="(value, name, i) in message"
-          :key="`messages_${i}`"
-          class="field">
-          <b-tag
-            v-if="showField(name)"
-            type="is-info">{{ name }}:
-          </b-tag>
-          <b-tag
-            v-if="showField(name)">
-            {{ prepareText(name, value) }}
-          </b-tag>
-        </span>
-      </b-taglist>
-    </template>
-  </tr>
+      <td style="width: 166px">{{ buildDatetime(message.time) }}</td>
+
+      <!-- tags with values -->
+      <template v-if="activeTags.length > 0">
+        <td v-for="(tag, i) in activeTags" :key="`tag_${i}`">
+          {{ prepareText(tag, message[tag]) }}
+        </td>
+      </template>
+      <td v-else>
+        <dl class="tag-source">
+          <template v-for="(value, name, i) in message">
+            <dt
+              class="tag-name"
+              v-if="showField(name)"
+              :key="`tag_name_${i}`">{{ name }}:</dt>
+            <dd
+              class="tag-value"
+              v-if="showField(name)"
+              :key="`tag_value_${i}`">{{ prepareText(name, value) }}</dd>
+          </template>
+        </dl>
+      </td>
+    </tr>
+    <!-- // tags with values -->
+
+    <!-- json block -->
+    <tr v-if="jsonBlockIsShowed">
+      <td :colspan="activeTags.length + 3">
+        <JSONCode :data="message.params"></JSONCode>
+      </td>
+    </tr>
+    <!-- // all json block -->
+  </fragment>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
+import JSONCode from '@/components/messages/JSONCode.vue';
 
 export default Vue.extend({
+  components: {
+    JSONCode,
+  },
   props: {
     message: {
       type: Object,
@@ -39,6 +61,11 @@ export default Vue.extend({
       type: Array,
       required: true,
     },
+  },
+  data() {
+    return {
+      jsonBlockIsShowed: false,
+    };
   },
   methods: {
     prepareText(tag: string, text: string): string {
@@ -52,20 +79,59 @@ export default Vue.extend({
       }
     },
     buildDatetime(text: string): string {
-      const date = new Date(text);
-
-      return `${date.getDay()}.${date.getMonth()}.${date.getFullYear()} @
-      ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
+      return new Date(text).toLocaleString(window.navigator.language);
+    },
+    buildJSON(): string {
+      return JSON.stringify(this.message.params, undefined, 4);
     },
     showField(name: string): boolean {
       return name !== 'params';
+    },
+    showJSON(): void {
+      this.jsonBlockIsShowed = !this.jsonBlockIsShowed;
     },
   },
 });
 </script>
 
 <style lang="scss" scoped>
-  .field{
-    margin: 0 0 0 10px;
+  /* TODO: fix it */
+  .btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    outline: none;
+    font-size: inherit;
+    color: inherit;
+    border-radius: 0;
+    :active, :focus {
+      background: none;
+      outline: none;
+      box-shadow: none;
+      border-color: #dbdbdb;
+    }
+  }
+  .tag-source {
+    margin-bottom: 0;
+    line-height: 2em;
+    word-break: break-word;
+    padding: 8px;
+    overflow: hidden;
+    max-height: 100px !important;
+    display: inline-block;
+  }
+  .tag-name {
+    background-color: rgba(3, 130, 217, 0.14);
+    padding: 2px 4px;
+    margin-right: 4px;
+    word-break: normal;
+    border-radius: 4px;
+    display: inline;
+  }
+  .tag-value {
+    display: inline-flex;
+    word-break: break-word;
+    margin-right: 5px;
   }
 </style>
