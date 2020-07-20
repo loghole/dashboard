@@ -22,18 +22,18 @@
     >
     </b-input>
 
-    <LableList
+    <LabelList
       :isMultiple="false"
       :value="param.operator"
       @input="setOperator"
       :name="param.key"
-    ></LableList>
+    ></LabelList>
   </b-field>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import LableList from '@/components/LableList.vue';
+import LabelList from '@/components/LabelList.vue';
 import TagInput from '@/components/TagInput.vue';
 
 import { SingleParam } from '@/const/const';
@@ -41,7 +41,7 @@ import { SingleParam } from '@/const/const';
 export default Vue.extend({
   components: {
     TagInput,
-    LableList,
+    LabelList,
   },
   props: {
     param: {
@@ -68,22 +68,22 @@ export default Vue.extend({
     },
   },
   methods: {
-    setField(value: any) {
+    setField(value: string[]) {
       this.canDelete = false;
       this.$emit('setJSONField', this.index, value);
     },
-    setOperator(value: any) {
+    setOperator(value: string) {
       this.$emit('setJSONOperator', this.index, value);
     },
-    deleteJSONParam() {
+    deleteJSONParam(): void {
       this.$emit('deleteJSONParam', this.index);
     },
-    keyDown() {
-      if (this.canDelete === true) {
+    keyDown(): void {
+      if (this.canDelete) {
         this.deleteJSONParam();
       }
     },
-    keyUp() {
+    keyUp(): void {
       if (this.isEmpty) {
         this.canDelete = true;
       }

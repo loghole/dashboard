@@ -27,7 +27,7 @@
 <script lang="ts">
 import Vue from 'vue';
 import TagInput from '@/components/TagInput.vue';
-import LableList from '@/components/LableList.vue';
+import LableList from '@/components/LabelList.vue';
 
 export default Vue.extend({
   components: {
