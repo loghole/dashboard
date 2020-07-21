@@ -174,10 +174,14 @@ func getEncoder() zapcore.Encoder {
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeLevel:    zapcore.LowercaseLevelEncoder,
-		EncodeTime:     zapcore.EpochNanosTimeEncoder,
+		EncodeTime:     RFC3339NanoTimeEncoder,
 		EncodeDuration: zapcore.NanosDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
 	})
+}
+
+func RFC3339NanoTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format("2006-01-02T15:04:05.000Z0700"))
 }
 
 type params struct {
