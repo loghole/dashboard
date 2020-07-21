@@ -181,7 +181,7 @@ func getEncoder() zapcore.Encoder {
 }
 
 func RFC3339NanoTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("2006-01-02T15:04:05.000Z0700"))
+	enc.AppendString(t.Format(time.RFC3339Nano))
 }
 
 type params struct {
