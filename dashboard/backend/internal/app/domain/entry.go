@@ -7,7 +7,7 @@ import (
 
 type Entry struct {
 	Time        time.Time       `json:"time"`
-	NSec        int64           `json:"nsec"`
+	NSec        int64           `json:"nsec,string"`
 	Namespace   string          `json:"namespace"`
 	Source      string          `json:"source"`
 	Host        string          `json:"host"`

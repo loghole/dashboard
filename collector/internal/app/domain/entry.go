@@ -135,12 +135,12 @@ func (e *Entry) appendString(key, value []byte) {
 }
 
 func (e *Entry) parseTime(data []byte) (time.Time, error) {
-	nsec, err := jsonparser.ParseInt(data)
+	str, err := jsonparser.ParseString(data)
 	if err != nil {
 		return time.Time{}, err
 	}
 
-	return time.Unix(0, nsec), nil
+	return time.Parse(time.RFC3339Nano, str)
 }
 
 func (e *Entry) parseString(data []byte) string {

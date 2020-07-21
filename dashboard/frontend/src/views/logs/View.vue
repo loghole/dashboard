@@ -1,225 +1,76 @@
 <template>
   <div class="columns p-2 pt-4">
-    <!-- add param -->
-    <b-sidebar
-      type="is-light"
-      :fullheight="true"
-      :overlay="false"
-      :open.sync="showAddParam"
-      :can-cancel="['escape', 'x']"
-    >
-      <div class="p-2 pt-4">
-        <b-field label="Operator" label-position="on-border">
-          <b-autocomplete
-            v-model="param.operator"
-            placeholder="e.g. >="
-            :data="filteredOperators"
-            :open-on-focus="true"
-            @select="option => (selected = option)"
-          >
-          </b-autocomplete>
-        </b-field>
-
-        <b-field label="Key" label-position="on-border">
-          <input
-            class="input"
-            v-model="param.key"
-            type="text"
-            placeholder="Field name"
-          />
-        </b-field>
-
-        <b-field
-          label="Value"
-          label-position="on-border"
-          v-if="isListValue(param.operator)"
-        >
-          <b-taginput
-            v-model="param.value.list"
-            autocomplete
-            :allow-new="true"
-            placeholder="Value"
-            icon="label"
-          >
-          </b-taginput>
-        </b-field>
-        <b-field label="Value" label-position="on-border" v-else>
-          <input
-            class="input"
-            v-model="param.value.item"
-            type="text"
-            placeholder="Value"
-          />
-        </b-field>
-
-        <button
-          class="button is-small is-fullwidth is-outlined is-success"
-          @click="saveParam()"
-        >
-          Add
-        </button>
-      </div>
-    </b-sidebar>
+    <!-- add param
+    <Sidebar v-model="showAddParam" v-on:save="saveParam"></Sidebar> -->
     <!-- add param -->
 
     <div class="column page-menu">
       <!-- date -->
-      <b-field label="Start time" label-position="on-border">
-        <b-datetimepicker
-          placeholder="Click to select..."
-          :max-datetime="maxDatetime"
-          :timepicker="{ enableSeconds: true }"
-          editable
-          v-model="form.startTime"
-        ></b-datetimepicker>
-      </b-field>
-
-      <b-field label="End time" label-position="on-border">
-        <b-datetimepicker
-          placeholder="Click to select..."
-          :timepicker="{ enableSeconds: true }"
-          editable
-          v-model="form.endTime"
-        ></b-datetimepicker>
+      <b-field>
+        <DateTime
+          :startTime="form.startTime"
+          :end-time="form.endTime"
+          :interval="form.interval"
+          v-on:setStartTime="setStartTime"
+          v-on:setEndTime="setEndTime"
+          v-on:setInterval="setInterval"
+        ></DateTime>
       </b-field>
       <!-- // date -->
 
-      <!-- level -->
-      <b-field label="Level =" label-position="on-border">
-        <b-taginput
-          v-model="form.level"
-          :data="levels"
-          autocomplete
-          :allow-new="true"
-          :open-on-focus="true"
-          placeholder="Level"
-          @typing="getLevelList"
-          icon="label"
+      <!-- menu default params -->
+      <b-field>
+        <Menu
+          v-on:setFormField="setFormField"
+          v-on:setOperatorField="setOperatorField"
+          :form="form"
+          :operator="operator"
+          :params="defaultParams"
         >
-        </b-taginput>
+        </Menu>
       </b-field>
-      <!-- // level -->
-
-      <!-- namespace -->
-      <b-field label="Namespace =" label-position="on-border">
-        <b-taginput
-          v-model="form.namespace"
-          :data="namespaces"
-          autocomplete
-          :allow-new="true"
-          :open-on-focus="true"
-          placeholder="Namespace"
-          @typing="getNamespaceList"
-          icon="label"
-        >
-        </b-taginput>
-      </b-field>
-      <!-- // namespace -->
-
-      <!-- source -->
-      <b-field label="Source" label-position="on-border">
-        <b-taginput
-          v-model="form.source"
-          :data="sources"
-          autocomplete
-          :allow-new="true"
-          :open-on-focus="true"
-          placeholder="Source"
-          @typing="getSourceList"
-          icon="label"
-        >
-        </b-taginput>
-      </b-field>
-      <!-- // source -->
-
-      <!-- traceID -->
-      <b-field label="Trace ID" label-position="on-border">
-        <b-taginput
-          v-model="form.traceID"
-          autocomplete
-          :allow-new="true"
-          placeholder="Trace ID"
-          icon="label"
-        >
-        </b-taginput>
-      </b-field>
-      <!-- // traceID -->
+      <!-- // menu default params -->
 
       <!-- params -->
-      <b-field
+      <JSONValue
         v-for="(param, i) in params"
-        :label="`${param.key} ${param.operator}`"
         :key="`param_${i}`"
-        label-position="on-border"
-      >
-        <b-taginput
-          v-if="isListValue(param.operator)"
-          v-model="param.value.list"
-          autocomplete
-          :allow-new="true"
-          placeholder="Value"
-          icon="label"
-          icon-right="close-circle"
-          icon-right-clickable
-          @icon-right-click="removeParam(i)"
-        >
-        </b-taginput>
-        <b-input
-          v-else
-          :placeholder="param.key"
-          v-model="param.value.item"
-          type="text"
-          icon-right="close-circle"
-          icon-right-clickable
-          @icon-right-click="removeParam(i)"
-        >
-        </b-input>
-      </b-field>
+        :param="param"
+        :index="i"
+        v-on:setJSONField="setJSONField"
+        v-on:setJSONOperator="setJSONOperator"
+        v-on:deleteJSONParam="deleteJSONParam"
+      ></JSONValue>
       <!-- // params -->
 
+      <!-- menu additional param -->
       <template v-if="showAdditionalParam">
-        <!-- host -->
-        <b-field label="Host" label-position="on-border">
-          <b-taginput
-            v-model="form.host"
-            :data="hosts"
-            autocomplete
-            :allow-new="true"
-            :open-on-focus="true"
-            placeholder="Host"
-            @typing="getHostList"
-            icon="label"
-          >
-          </b-taginput>
+        <b-field>
+          <Menu
+            v-on:setFormField="setFormField"
+            v-on:setOperatorField="setOperatorField"
+            :form="form"
+            :operator="operator"
+            :params="additionalParams"
+          ></Menu>
         </b-field>
-        <!-- // host -->
-
-        <!-- Build commit -->
-        <b-field label="Build commit" label-position="on-border">
-          <b-taginput
-            v-model="form.buildCommit"
-            autocomplete
-            :allow-new="true"
-            placeholder="Build commit"
-            icon="label"
-          >
-          </b-taginput>
-        </b-field>
-        <!-- // Build commit -->
-
-        <!-- Config Hash -->
-        <b-field label="Config hash" label-position="on-border">
-          <b-taginput
-            v-model="form.configHash"
-            autocomplete
-            :allow-new="true"
-            placeholder="Config hash"
-            icon="label"
-          >
-          </b-taginput>
-        </b-field>
-        <!-- // Config Hash -->
       </template>
+      <!-- // menu additional param -->
+
+      <!-- add new param  -->
+      <b-field v-if="showAddParam">
+        <b-input
+          v-model="newParamName"
+          placeholder="new param name"
+          type="text"
+          @keydown.native.enter="saveParam"
+        >
+        </b-input>
+        <p class="control">
+          <button class="button is-primary" @click="saveParam">Add</button>
+        </p>
+      </b-field>
+      <!-- // add new param  -->
 
       <div class="buttons is-centered">
         <button
@@ -233,13 +84,13 @@
           </b-icon>
           <span>other</span>
         </button>
-        <button
-          class="button is-small is-outlined"
-          @click="showAddParam = true"
-        >
+
+        <!-- add param -->
+        <button class="button is-small is-outlined" @click="newParam">
           <b-icon icon="plus" size="is-small"> </b-icon>
           <span>param</span>
         </button>
+        <!-- // add param -->
       </div>
       <b-button class="button is-primary is-fullwidth" @click="search"
         >Search</b-button
@@ -247,53 +98,111 @@
     </div>
 
     <div class="column">
-      <b-field label="Search" label-position="on-border">
-        <b-input
-          placeholder="Search..."
-          type="search"
-          icon="magnify"
-          icon-clickable
-          class="w100"
-          v-model="form.message"
-        ></b-input>
-        <p class="control">
-          <b-button class="button is-primary">Search</b-button>
-        </p>
-      </b-field>
+      <div class="columns">
+        <!-- Showed tags -->
+        <div class="column">
+          <b-taginput
+            v-model="showTags"
+            :data="filteredTags"
+            autocomplete
+            :allow-new="true"
+            :open-on-focus="true"
+            placeholder="Showed tags"
+            icon="label"
+            @typing="setFilteredTag"
+          ></b-taginput>
+        </div>
+        <!-- // Showed tags -->
 
-      <p v-for="(m, i) in messages" :key="i">{{ JSON.stringify(m) }}</p>
+        <div class="column">
+          <b-field label="Search" label-position="on-border">
+            <b-input
+              placeholder="Search..."
+              type="search"
+              icon="magnify"
+              icon-clickable
+              class="w100"
+              v-model="form.message"
+            ></b-input>
+            <p class="control">
+              <b-button class="button is-primary">Search</b-button>
+            </p>
+          </b-field>
+        </div>
+      </div>
 
-      <b-skeleton
-        size="is-large"
-        :active="loading"
-        :count="20"
-        v-if="messages.length === 0"
-      ></b-skeleton>
+      <!-- messages table -->
+      <MessagesTable
+        :activeTags="showTags"
+        :messages="messages"
+      ></MessagesTable>
+      <!-- // entry table -->
     </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { Param, Form, ParamValue } from '../../types/view';
+import DateTime from '@/components/DateTime.vue';
+import Menu from '@/components/menu/Menu.vue';
+import MessagesTable from '@/components/messages/MessagesTable.vue';
+import JSONValue from '@/components/menu/JSONValue.vue';
+import {
+  Param, Form, ParamValue, SearchParam,
+} from '@/types/view';
+
+import { SingleParam, IntervalRegexp } from '@/const/const';
+import FilterTags from '@/plugins/filter';
 
 export default Vue.extend({
+  components: {
+    DateTime,
+    Menu,
+    MessagesTable,
+    JSONValue,
+  },
   data() {
     return {
-      loading: true,
+      operator: {
+        level: '=' as string,
+        namespace: '=' as string,
+        source: '=' as string,
+        traceID: '=' as string,
+        host: '=' as string,
+        buildCommit: '=' as string,
+        configHash: '=' as string,
+      },
       form: {
-        startTime: new Date(new Date().getTime() - 1000 * 60),
+        startTime: new Date(new Date().getTime() - 1000 * 15),
         endTime: null,
+        interval: '',
         namespace: [] as string[],
         source: [] as string[],
         traceID: [] as string[],
         host: [] as string[],
         level: [] as string[],
-        buildCommit: '',
-        configHash: '',
+        buildCommit: [] as string[],
+        configHash: [] as string[],
         message: '',
       } as Form,
+      defaultParams: [
+        { key: 'level', name: 'Level', type: 'level' },
+        { key: 'namespace', name: 'Namespace', type: 'namespace' },
+        { key: 'source', name: 'Source', type: 'source' },
+        { key: 'traceID', name: 'Trace ID' },
+      ] as SearchParam[],
+      additionalParams: [
+        { key: 'host', name: 'Host', type: 'host' },
+        { key: 'buildCommit', name: 'Build commit' },
+        { key: 'configHash', name: 'Config hash' },
+      ] as SearchParam[],
       params: [] as Param[],
+      showAddParam: false,
+      newParamName: '',
+      tagsInput: '',
+
+      // TODO drop..?
+
       param: {
         operator: '',
         type: '',
@@ -308,10 +217,11 @@ export default Vue.extend({
       hosts: [],
       namespaces: [],
       levels: [],
+      tags: [] as string[],
       operators: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
-      showAddParam: false,
       showAdditionalParam: false,
       messages: [],
+      showTags: [],
     };
   },
   computed: {
@@ -320,47 +230,111 @@ export default Vue.extend({
         (option: string) => option.toLowerCase().indexOf(this.param.operator.toLowerCase()) >= 0,
       );
     },
+    filteredTags(): string[] {
+      return FilterTags(this.tags, this.showTags, this.tagsInput);
+    },
   },
   methods: {
-    getSourceList(val: string): void {
-      console.log(val);
-    },
-    getHostList(val: string): void {
-      console.log(val);
-    },
-    getNamespaceList(val: string): void {
-      console.log(val);
-    },
-    getLevelList(val: string): void {
-      console.log(val);
-    },
     saveParam(): void {
       this.showAddParam = false;
 
-      this.params.push({
-        type: this.param.type,
-        key: this.param.key,
-        value: this.param.value,
-        operator: this.param.operator,
-      } as Param);
+      if (this.params.findIndex((p) => p.key === this.newParamName) !== -1) {
+        // TODO higlight this param // 5 sec
+        return;
+      }
 
-      this.param = {
-        operator: '',
-        type: '',
-        key: '',
-        value: {
-          item: '',
-          list: [] as string[],
-        } as ParamValue,
-      } as Param;
+      this.params.push({
+        type: 'json',
+        key: this.newParamName,
+        value: { item: '', list: [] as string[] },
+        operator: '=',
+      });
     },
-    removeParam(idx: number): void {
-      this.params = this.params.filter((v, i) => i !== idx);
+    newParam() {
+      this.showAddParam = true;
+      this.newParamName = '';
     },
-    isListValue(operator: string): boolean {
-      return ['=', '!=', 'LIKE', 'NOT LIKE'].includes(operator);
+    setStartTime(val: Date): void {
+      this.form.startTime = val;
+    },
+    setEndTime(val: Date): void {
+      this.form.endTime = val;
+    },
+    setInterval(val: string): void {
+      this.form.interval = val;
+    },
+    setFormField(key: string, val: string[]): void {
+      this.form[key] = val;
+    },
+    setOperatorField(key: string, val: string): void {
+      this.operator[key] = val;
+    },
+    setJSONField(idx: number, val: string | string[]): void {
+      if (typeof val === 'string') {
+        this.params[idx].value.item = val;
+        return;
+      }
+
+      this.params[idx].value.list = val;
+    },
+    setJSONOperator(idx: number, val: string): void {
+      if (
+        !SingleParam.includes(this.params[idx].operator)
+        === SingleParam.includes(val)
+      ) {
+        this.params[idx].value.list = [];
+        this.params[idx].value.item = '';
+      }
+
+      this.params[idx].operator = val;
+    },
+    deleteJSONParam(idx: number): void {
+      this.$nextTick(() => {
+        this.params = this.params.filter((v, i) => i !== idx);
+      });
+    },
+    setFilteredTag(text: string) {
+      this.tagsInput = text;
+    },
+    convertInterval(val: string): Date {
+      const values = IntervalRegexp.exec(val);
+      const num = parseInt(values[1], 10);
+      const t = values[2];
+
+      let offset = 0;
+
+      switch (t) {
+        case 'm':
+        case 'min':
+          offset = num * 60;
+          break;
+
+        case 'h':
+        case 'hr':
+        case 'hour':
+          offset = num * 3600;
+          break;
+
+        case 'd':
+        case 'day':
+          offset = num * 3600 * 24;
+          break;
+
+        default:
+          offset = num;
+      }
+
+      offset *= 1000;
+
+      return new Date(new Date().getTime() - offset);
     },
     search(): void {
+      let time = this.form.startTime;
+
+      if (this.form.interval !== '0') {
+        time = this.convertInterval(this.form.interval);
+      }
+
       const params = [
         {
           type: 'column',
@@ -368,12 +342,21 @@ export default Vue.extend({
           operator: '>=',
           value: {
             item: parseInt(
-              (this.form.startTime.getTime() / 1000).toString(),
+              (time.getTime() / 1000).toString(),
               10,
             ).toString(),
           } as ParamValue,
         },
       ] as Param[];
+
+      if (this.form.endTime !== null) {
+        params.push({
+          type: 'column',
+          key: 'time',
+          operator: '<=',
+          value: { item: this.form.endTime } as ParamValue,
+        });
+      }
 
       if (this.form.endTime !== null) {
         params.push({
@@ -394,19 +377,27 @@ export default Vue.extend({
       }
 
       [
-        { key: 'namespace', value: this.form.namespace },
-        { key: 'level', value: this.form.level },
-        { key: 'source', value: this.form.source },
-        { key: 'trace_id', value: this.form.traceID },
-        { key: 'host', value: this.form.host },
-        { key: 'build_commit', value: this.form.buildCommit },
-        { key: 'config_hash', value: this.form.configHash },
+        { mapKey: 'namespace', key: 'namespace', value: this.form.namespace },
+        { mapKey: 'level', key: 'level', value: this.form.level },
+        { mapKey: 'source', key: 'source', value: this.form.source },
+        { mapKey: 'trace_id', key: 'trace_id', value: this.form.traceID },
+        { mapKey: 'host', key: 'host', value: this.form.host },
+        {
+          mapKey: 'buildCommit',
+          key: 'build_commit',
+          value: this.form.buildCommit,
+        },
+        {
+          mapKey: 'configHash',
+          key: 'config_hash',
+          value: this.form.configHash,
+        },
       ].forEach((h) => {
         if (h.value.length > 0) {
           params.push({
             type: 'column',
             key: h.key,
-            operator: '=',
+            operator: this.operator[h.mapKey] || '=',
             value: { list: h.value } as ParamValue,
           });
         }
@@ -421,17 +412,70 @@ export default Vue.extend({
         });
       });
 
+      // console.log(JSON.stringify(params));
+
+      if (decodeURIComponent(window.location.search) !== decodeURIComponent(this.getFullURL())) {
+        this.$router.push(
+          `${window.location.pathname}${this.getFullURL()}`,
+        );
+      }
+
       Vue.axios
-        .post('/api/v1/entry/list', { params, limit: 1000 })
+        .post('/api/v1/entry/list', { params, limit: 100 })
         .then((response) => {
           this.messages = response.data.data;
 
-          console.log(response.data);
+          this.setTags(response.data.data);
         })
         .catch((e) => {
           console.error(e);
         });
     },
+    getFullURL(): string {
+      return `?form=${this.getURL(this.form)}&params=${this.getURL(this.params)}`;
+    },
+    getURL(param: Form | Param[]): string {
+      return encodeURIComponent(JSON.stringify(param));
+    },
+    setTags(list: Array<any>): void {
+      const h = {} as Record<string, boolean>;
+
+      list.forEach((l: Record<string, any>) => {
+        Object.keys(l).forEach((k) => {
+          h[k] = true;
+        });
+      });
+
+      this.tags = Object.keys(h);
+    },
+  },
+  created() {
+    if (this.$route.query.params) {
+      this.params = JSON.parse(decodeURIComponent(this.$route.query.params));
+    }
+
+    if (this.$route.query.form) {
+      const form = JSON.parse(decodeURIComponent(this.$route.query.form));
+      form.startTime = new Date(form.startTime);
+
+      this.form = form;
+
+      this.search();
+      return;
+    }
+
+    Vue.axios
+      .post('/api/v1/entry/list', { limit: 100 })
+      .then((response) => {
+        this.messages = response.data.data;
+
+        this.setTags(response.data.data);
+
+        console.log(response.data);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   },
 });
 </script>
@@ -453,5 +497,9 @@ export default Vue.extend({
     max-width: 210px;
     min-width: 150px;
   }
+}
+
+.is-relative {
+  position: relative;
 }
 </style>

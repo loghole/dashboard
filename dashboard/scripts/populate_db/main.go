@@ -5,43 +5,42 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"strconv"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/gadavy/lhw"
 	"github.com/spf13/viper"
-
-	_ "github.com/ClickHouse/clickhouse-go" // driver
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
-
-const connStr = "tcp://%s?username=%s&database=%s&read_timeout=10&write_timeout=20"
 
 func main() {
 	viper.AutomaticEnv()
 
 	time.Sleep(viper.GetDuration("SLEEP"))
 
-	db, err := sqlx.Connect("clickhouse",
-		fmt.Sprintf(connStr,
-			viper.GetString("CLICKHOUSE_URI"),
-			viper.GetString("CLICKHOUSE_USER"),
-			viper.GetString("CLICKHOUSE_DATABASE"),
-		),
-	)
+	// init writer
+	writer, err := lhw.NewWriter(lhw.Config{
+		NodeURIs: []string{viper.GetString("COLLECTOR_URI")},
+		Insecure: true,
+		Logger:   log.New(os.Stdout, "", log.LstdFlags),
+	})
 	if err != nil {
-		log.Fatalln("db connect", err)
+		log.Fatalln("init writer failed", err)
 	}
 
-	defer db.Close()
+	defer writer.Close() // flushes storage, if contain any data
+
+	// init logger
+	logger := zap.New(zapcore.NewCore(
+		getEncoder(),
+		zapcore.NewMultiWriteSyncer(zapcore.AddSync(writer)),
+		zapcore.DebugLevel)).Sugar()
 
 	generator := NewErrorGenerator()
 
-	query := `INSERT INTO internal_logs_buffer (
-		namespace, source, host, level, trace_id, message, params, build_commit, config_hash)
-		VALUES (?,?,?,?,?,?,?,?,?,?)
-`
-
-	log.Println("start")
+	log.Println("start write logs")
 
 	for i := 0; i < viper.GetInt("COUNT"); i++ {
 		entry, err := generator.GenerateEntry()
@@ -50,33 +49,29 @@ func main() {
 			continue
 		}
 
-		tx, err := db.Begin()
-		if err != nil {
-			log.Println("Begin", err)
-			continue
+		l := logger.With("namespace", entry.Namespace).
+			With("source", entry.Source).
+			With("host", entry.Host).
+			With("trace_id", entry.TraceID).
+			With("build_commit", entry.BuildCommit).
+			With("config_hash", entry.ConfigHash)
+
+		if entry.JSON != nil {
+			l = l.With("json_key", entry.JSON)
 		}
 
-		_, err = tx.Exec(query,
-			entry.Namespace,
-			entry.Source,
-			entry.Host,
-			entry.Level,
-			entry.TraceID,
-			entry.Message,
-			entry.Params,
-			entry.BuildCommit,
-			entry.ConfigHash)
-		if err != nil {
-			log.Println("Exec", err)
-			continue
+		switch entry.Level {
+		case "debug":
+			l.Debug(entry.Message)
+		case "info":
+			l.Info(entry.Message)
+		case "warn":
+			l.Warn(entry.Message)
+		case "error":
+			l.Error(entry.Message)
 		}
 
-		if err = tx.Commit(); err != nil {
-			log.Println("Commit", err)
-			continue
-		}
-
-		time.Sleep(time.Millisecond * 3)
+		time.Sleep(time.Millisecond * 5)
 	}
 
 	log.Println("success")
@@ -103,26 +98,22 @@ func (e *ErrorGenerator) randomMessage() string {
 }
 
 type Entry struct {
-	Time        time.Time `json:"time"`
-	NSec        int64     `json:"n_sec"`
-	Namespace   string    `json:"namespace"`
-	Source      string    `json:"source"`
-	Host        string    `json:"host"`
-	Level       string    `json:"level"`
-	TraceID     string    `json:"trace_id"`
-	Message     string    `json:"message"`
-	Params      string    `json:"params,omitempty"`
-	BuildCommit string    `json:"build_commit"`
-	ConfigHash  string    `json:"config_hash"`
+	Namespace   string
+	Source      string
+	Host        string
+	Level       string
+	TraceID     string
+	Message     string
+	Params      string
+	BuildCommit string
+	ConfigHash  string
+	JSON        interface{}
 }
 
 func (e *ErrorGenerator) GenerateEntry() (*Entry, error) {
-	now := time.Now()
 	param := e.randomParams()
 
 	entry := &Entry{
-		Time:        now,
-		NSec:        now.UnixNano(),
 		Namespace:   param.namespace,
 		Source:      param.source,
 		Host:        param.host,
@@ -132,6 +123,7 @@ func (e *ErrorGenerator) GenerateEntry() (*Entry, error) {
 		Params:      "",
 		BuildCommit: param.buildCommit,
 		ConfigHash:  param.configHash,
+		JSON:        e.randomJSON(),
 	}
 
 	data, err := json.Marshal(entry)
@@ -148,6 +140,14 @@ func (e *ErrorGenerator) randomParams() params {
 	return e.loggerParams[e.rnd.Intn(len(e.loggerParams)-1)]
 }
 
+func (e *ErrorGenerator) randomJSON() interface{} {
+	if e.rnd.Uint64()&(1<<63) != 0 {
+		return jsonRand[e.rnd.Intn(len(jsonRand)-1)]
+	}
+
+	return nil
+}
+
 func (e *ErrorGenerator) randomLevel() string {
 	switch e.rnd.Intn(4) {
 	case 0:
@@ -161,6 +161,27 @@ func (e *ErrorGenerator) randomLevel() string {
 	default:
 		return "info"
 	}
+}
+
+// getEncoder return log hole json encoding
+func getEncoder() zapcore.Encoder {
+	return zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "message",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     RFC3339NanoTimeEncoder,
+		EncodeDuration: zapcore.NanosDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	})
+}
+
+func RFC3339NanoTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format(time.RFC3339Nano))
 }
 
 type params struct {
@@ -377,4 +398,15 @@ var errText = []string{
 	"some message 4",
 	"some message 5",
 	"some message 6",
+}
+
+var jsonRand = []interface{}{
+	map[string]interface{}{
+		"key1": "value1",
+		"key2": "85526454644",
+		"key3": []string{"array_val1", "array_val2", "array_val3", "array_val4"},
+	},
+	"some value",
+	[]int{1, 2, 3, 4, 5, 6, 7, 8, 8, 99},
+	[]float64{66666666666.66666666666666666, 2344233423, 432432435},
 }
