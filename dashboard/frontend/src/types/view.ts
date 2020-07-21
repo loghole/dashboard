@@ -14,6 +14,7 @@ interface ParamValue {
 interface Form {
   startTime: Date;
   endTime: any;
+  interval: string,
   namespace: string[];
   source: string[];
   traceID: string[];

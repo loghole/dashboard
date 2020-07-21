@@ -4,4 +4,11 @@ const SingleParam = ['<', '<=', '>', '>='] as string[];
 
 const OperatorsSingle = OperatorMultiple.concat(SingleParam) as string[];
 
-export { OperatorsSingle, OperatorMultiple, SingleParam };
+const IntervalRegexp = new RegExp('^([0-9]+)(s|sec|m|min|h|hr|hour|d|day)?$', 'i');
+
+export {
+  OperatorsSingle,
+  OperatorMultiple,
+  SingleParam,
+  IntervalRegexp,
+};

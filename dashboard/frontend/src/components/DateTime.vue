@@ -6,10 +6,8 @@
           <b-radio-button
             v-model="type"
             native-value="relative"
-            @input="setTime"
             size="is-small"
-          >
-            <b-icon icon="clock"></b-icon>
+          ><b-icon icon="clock"></b-icon>
             <span>Relative</span>
           </b-radio-button>
 
@@ -17,8 +15,7 @@
             v-model="type"
             native-value="absolute"
             size="is-small"
-          >
-            <b-icon icon="calendar"></b-icon>
+          ><b-icon icon="calendar"></b-icon>
             <span>Absolute</span>
           </b-radio-button>
         </b-field>
@@ -67,8 +64,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-
-const reg = new RegExp('^([0-9]+)(s|sec|m|min|h|hr|hour|d|day)?$', 'i');
+import { IntervalRegexp } from '@/const/const';
 
 export default Vue.extend({
   props: {
@@ -77,6 +73,10 @@ export default Vue.extend({
     },
     endTime: {
       type: Date,
+    },
+    interval: {
+      type: String,
+      default: '15s',
     },
   },
   data() {
@@ -96,57 +96,21 @@ export default Vue.extend({
         '7d',
         '14d',
       ],
-      name: '15s',
       hasError: false,
     };
   },
   watch: {
-    name() {
-      this.setTime();
-    },
-  },
-  methods: {
-    setTime() {
-      if (!reg.test(this.name)) {
-        this.hasError = true;
+    type(newValue) {
+      if (newValue === 'relative') {
+        this.start = null;
+        this.end = null;
+
+        this.name = '15s';
+
         return;
       }
 
-      this.hasError = false;
-      this.end = null;
-
-      const values = reg.exec(this.name);
-      const num = parseInt(values[1], 10);
-      const t = values[2];
-
-      let offset = 0;
-
-      switch (t) {
-        case 'm':
-        case 'min':
-          offset = num * 60;
-          break;
-
-        case 'h':
-        case 'hr':
-        case 'hour':
-          offset = num * 3600;
-          break;
-
-        case 'd':
-        case 'day':
-          offset = num * 3600 * 24;
-          break;
-
-        default:
-          offset = num;
-      }
-
-      offset *= 1000;
-
-      const d = new Date(new Date().getTime() - offset);
-
-      this.start = d;
+      this.name = '0';
     },
   },
   computed: {
@@ -166,6 +130,21 @@ export default Vue.extend({
         this.$emit('setEndTime', newValue);
       },
     },
+    name: {
+      get() {
+        return this.interval;
+      },
+      set(newValue: string) {
+        if (!IntervalRegexp.test(newValue)) {
+          this.hasError = true;
+          return;
+        }
+
+        this.hasError = false;
+
+        this.$emit('setInterval', newValue);
+      },
+    },
     filteredDataArray() {
       const arr = this.data.filter(
         (option) => option
@@ -182,7 +161,9 @@ export default Vue.extend({
     },
   },
   mounted() {
-    this.setTime();
+    if (this.interval === '0') {
+      this.type = 'absolute';
+    }
   },
 });
 </script>

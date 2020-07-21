@@ -60,7 +60,6 @@ export default Vue.extend({
   },
   computed: {
     isMultiple() {
-      console.log(this.param);
       return !SingleParam.includes(this.param.operator);
     },
     isEmpty() {

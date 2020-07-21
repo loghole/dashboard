@@ -35,7 +35,7 @@
       </p>
       <p>Nothing here.</p>
     </div>
-  ></section>
+  </section>
 </template>
 
 <script lang="ts">

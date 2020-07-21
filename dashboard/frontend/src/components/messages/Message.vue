@@ -4,7 +4,6 @@
     <tr>
       <td>
         <button aria-expanded="true" aria-label="Toggle row details" class="btn" @click="showJSON">
-          <!-- TODO: fix it? -->
           <b-icon :icon="jsonBlockIsShowed ? 'menu-down' : 'menu-down-outline'"></b-icon>
         </button>
       </td>
@@ -79,9 +78,6 @@ export default Vue.extend({
     },
     buildDatetime(text: string): string {
       return new Date(text).toLocaleString(window.navigator.language);
-    },
-    buildJSON(): string {
-      return JSON.stringify(this.message.params, undefined, 4);
     },
     showField(name: string): boolean {
       return name !== 'params';

@@ -10,8 +10,10 @@
         <DateTime
           :startTime="form.startTime"
           :end-time="form.endTime"
+          :interval="form.interval"
           v-on:setStartTime="setStartTime"
           v-on:setEndTime="setEndTime"
+          v-on:setInterval="setInterval"
         ></DateTime>
       </b-field>
       <!-- // date -->
@@ -107,9 +109,8 @@
             :open-on-focus="true"
             placeholder="Showed tags"
             icon="label"
-            @typing="getFilteredTags"
-          >
-          </b-taginput>
+            @typing="setFilteredTag"
+          ></b-taginput>
         </div>
         <!-- // Showed tags -->
 
@@ -150,7 +151,7 @@ import {
   Param, Form, ParamValue, SearchParam,
 } from '@/types/view';
 
-import { SingleParam } from '@/const/const';
+import { SingleParam, IntervalRegexp } from '@/const/const';
 import FilterTags from '@/plugins/filter';
 
 export default Vue.extend({
@@ -172,8 +173,9 @@ export default Vue.extend({
         configHash: '=' as string,
       },
       form: {
-        startTime: new Date(new Date().getTime() - 1000 * 60 * 60 * 24),
+        startTime: new Date(new Date().getTime() - 1000 * 15),
         endTime: null,
+        interval: '',
         namespace: [] as string[],
         source: [] as string[],
         traceID: [] as string[],
@@ -258,6 +260,9 @@ export default Vue.extend({
     setEndTime(val: Date): void {
       this.form.endTime = val;
     },
+    setInterval(val: string): void {
+      this.form.interval = val;
+    },
     setFormField(key: string, val: string[]): void {
       this.form[key] = val;
     },
@@ -288,16 +293,48 @@ export default Vue.extend({
         this.params = this.params.filter((v, i) => i !== idx);
       });
     },
-    getFilteredTags(text: string) {
-    // console.log(this.tags, this.filteredTags);
-      //   this.filteredTags = FilterTags(this.tags, this.filteredTags, text);
+    setFilteredTag(text: string) {
       this.tagsInput = text;
     },
-    // TODO drop it...?
-    isListValue(operator: string): boolean {
-      return ['=', '!=', 'LIKE', 'NOT LIKE'].includes(operator);
+    convertInterval(val: string): Date {
+      const values = IntervalRegexp.exec(val);
+      const num = parseInt(values[1], 10);
+      const t = values[2];
+
+      let offset = 0;
+
+      switch (t) {
+        case 'm':
+        case 'min':
+          offset = num * 60;
+          break;
+
+        case 'h':
+        case 'hr':
+        case 'hour':
+          offset = num * 3600;
+          break;
+
+        case 'd':
+        case 'day':
+          offset = num * 3600 * 24;
+          break;
+
+        default:
+          offset = num;
+      }
+
+      offset *= 1000;
+
+      return new Date(new Date().getTime() - offset);
     },
     search(): void {
+      let time = this.form.startTime;
+
+      if (this.form.interval !== '0') {
+        time = this.convertInterval(this.form.interval);
+      }
+
       const params = [
         {
           type: 'column',
@@ -305,12 +342,21 @@ export default Vue.extend({
           operator: '>=',
           value: {
             item: parseInt(
-              (this.form.startTime.getTime() / 1000).toString(),
+              (time.getTime() / 1000).toString(),
               10,
             ).toString(),
           } as ParamValue,
         },
       ] as Param[];
+
+      if (this.form.endTime !== null) {
+        params.push({
+          type: 'column',
+          key: 'time',
+          operator: '<=',
+          value: { item: this.form.endTime } as ParamValue,
+        });
+      }
 
       if (this.form.endTime !== null) {
         params.push({
@@ -366,7 +412,13 @@ export default Vue.extend({
         });
       });
 
-      console.log(JSON.stringify(params));
+      // console.log(JSON.stringify(params));
+
+      if (decodeURIComponent(window.location.search) !== decodeURIComponent(this.getFullURL())) {
+        this.$router.push(
+          `${window.location.pathname}${this.getFullURL()}`,
+        );
+      }
 
       Vue.axios
         .post('/api/v1/entry/list', { params, limit: 100 })
@@ -374,12 +426,16 @@ export default Vue.extend({
           this.messages = response.data.data;
 
           this.setTags(response.data.data);
-
-          console.log(response.data);
         })
         .catch((e) => {
           console.error(e);
         });
+    },
+    getFullURL(): string {
+      return `?form=${this.getURL(this.form)}&params=${this.getURL(this.params)}`;
+    },
+    getURL(param: Form | Param[]): string {
+      return encodeURIComponent(JSON.stringify(param));
     },
     setTags(list: Array<any>): void {
       const h = {} as Record<string, boolean>;
@@ -393,7 +449,21 @@ export default Vue.extend({
       this.tags = Object.keys(h);
     },
   },
-  mounted() {
+  created() {
+    if (this.$route.query.params) {
+      this.params = JSON.parse(decodeURIComponent(this.$route.query.params));
+    }
+
+    if (this.$route.query.form) {
+      const form = JSON.parse(decodeURIComponent(this.$route.query.form));
+      form.startTime = new Date(form.startTime);
+
+      this.form = form;
+
+      this.search();
+      return;
+    }
+
     Vue.axios
       .post('/api/v1/entry/list', { limit: 100 })
       .then((response) => {
