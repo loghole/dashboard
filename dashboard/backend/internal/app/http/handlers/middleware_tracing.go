@@ -16,7 +16,7 @@ func NewTracingMiddleware(tracer *tracing.Tracer) *TracingMiddleware {
 
 func (m *TracingMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		span := m.tracer.NewSpan().WithName(r.URL.String()).Build()
+		span := m.tracer.NewSpan().WithName(r.URL.String()).ExtractHeaders(r.Header).Build()
 		defer span.Finish()
 
 		next.ServeHTTP(w, r.WithContext(span.Context(r.Context())))
