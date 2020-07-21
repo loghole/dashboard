@@ -5,8 +5,7 @@
       <td>
         <button aria-expanded="true" aria-label="Toggle row details" class="btn" @click="showJSON">
           <!-- TODO: fix it? -->
-          <b-icon v-if="jsonBlockIsShowed" icon="menu-down"></b-icon>
-          <b-icon v-else icon="menu-down-outline"></b-icon>
+          <b-icon :icon="jsonBlockIsShowed ? 'menu-down' : 'menu-down-outline'"></b-icon>
         </button>
       </td>
       <td style="width: 166px">{{ buildDatetime(message.time) }}</td>
