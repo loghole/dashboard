@@ -27,6 +27,9 @@ services:
       - SERVER_CERT=
       - SERVER_KEY=
 
+      - ENABLE_AUTH=true
+      - TOKEN_LIST=secret_token_1, secret_token_2
+
       - LOGGER_LEVEL=debug
 
       - CLICKHOUSE_URI=clickhouse:9000

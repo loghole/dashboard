@@ -61,11 +61,15 @@ func main() {
 	entryService := entry.NewService(repository, traceLogger)
 
 	// Init handlers
-	entryHandlers := handlers.NewEntryHandlers(entryService, traceLogger, tracer)
+	var (
+		entryHandlers  = handlers.NewEntryHandlers(entryService, traceLogger, tracer)
+		authMiddleware = handlers.NewAuthMiddleware(viper.GetBool("ENABLE_AUTH"), viper.GetStringSlice("TOKEN_LIST"))
+	)
 
 	srv := initHTTPServer()
 
 	r := srv.Router()
+	r.Use(authMiddleware.Middleware)
 	r.HandleFunc("/api/v1/store", entryHandlers.StoreItemHandler)
 	r.HandleFunc("/api/v1/store/list", entryHandlers.StoreListHandler)
 	r.HandleFunc("/api/v1/ping", entryHandlers.PingHandler)
