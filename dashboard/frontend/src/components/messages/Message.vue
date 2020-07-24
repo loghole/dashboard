@@ -1,5 +1,4 @@
 <template>
-  <!-- нужная штука для таблиц, нашел в https://github.com/vuejs/vue/issues/5758-->
   <tbody>
     <tr>
       <td>
