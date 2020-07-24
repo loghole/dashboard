@@ -200,36 +200,12 @@ export default Vue.extend({
       showAddParam: false,
       newParamName: '',
       tagsInput: '',
-
-      // TODO drop..?
-
-      param: {
-        operator: '',
-        type: '',
-        key: '',
-        value: {
-          item: '',
-          list: [] as string[],
-        } as ParamValue,
-      } as Param,
-      maxDatetime: new Date(),
-      sources: [],
-      hosts: [],
-      namespaces: [],
-      levels: [],
       tags: [] as string[],
-      operators: ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'NOT LIKE'],
-      showAdditionalParam: false,
-      messages: [],
       showTags: [],
+      messages: [],
     };
   },
   computed: {
-    filteredOperators(): string[] {
-      return this.operators.filter(
-        (option: string) => option.toLowerCase().indexOf(this.param.operator.toLowerCase()) >= 0,
-      );
-    },
     filteredTags(): string[] {
       return FilterTags(this.tags, this.showTags, this.tagsInput);
     },
@@ -447,7 +423,7 @@ export default Vue.extend({
     setTags(list: Array<any>): void {
       const h = {} as Record<string, boolean>;
 
-      list.forEach((l: Record<string, any>) => {
+      list.forEach((l: Record<string, number>) => {
         Object.keys(l).forEach((k) => {
           h[k] = true;
         });
