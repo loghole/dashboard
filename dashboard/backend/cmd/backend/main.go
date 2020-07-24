@@ -64,7 +64,7 @@ func main() {
 		listSuggestHandlers = handlers.NewSuggestHandlers(suggestList, traceLogger)
 		tracingMiddleware   = handlers.NewTracingMiddleware(tracer)
 		compressMiddleware  = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
-		filesHandler        = handlers.NewFilesHanlder("path")
+		filesHandler        = handlers.NewFilesHandler(viper.GetString("FRONTEND_PATH"))
 	)
 
 	// Init http server

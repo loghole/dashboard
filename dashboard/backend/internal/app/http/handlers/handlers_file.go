@@ -3,7 +3,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -11,9 +10,7 @@ type FilesHandler struct {
 	path string
 }
 
-func NewFilesHanlder(path string) *FilesHandler {
-	log.Println("not bindata")
-
+func NewFilesHandler(path string) *FilesHandler {
 	return &FilesHandler{path: path}
 }
 

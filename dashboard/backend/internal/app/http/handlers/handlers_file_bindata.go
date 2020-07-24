@@ -10,7 +10,7 @@ import (
 
 type FilesHandler struct{}
 
-func NewFilesHanlder(_ string) *FilesHandler {
+func NewFilesHandler(_ string) *FilesHandler {
 	return &FilesHandler{}
 }
 

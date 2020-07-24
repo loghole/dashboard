@@ -15,6 +15,3 @@ gotest:
 
 golint:
 	golangci-lint run -v
-
-frontend:
-	go-bindata -fs -o bindata/bindata.go -prefix "../frontend/dist" -pkg "bindata" ../frontend/dist/...
