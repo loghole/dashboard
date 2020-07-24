@@ -1,6 +1,5 @@
 <template>
-  <!-- нужная штука для таблиц, нашел в https://github.com/vuejs/vue/issues/5758-->
-  <fragment>
+  <tbody>
     <tr>
       <td>
         <button aria-expanded="true" aria-label="Toggle row details" class="btn" @click="showJSON">
@@ -39,7 +38,7 @@
       </td>
     </tr>
     <!-- // all json block -->
-  </fragment>
+  </tbody>
 </template>
 
 <script lang="ts">

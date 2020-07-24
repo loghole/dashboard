@@ -171,10 +171,10 @@ export default Vue.extend({
         host: '=' as string,
         buildCommit: '=' as string,
         configHash: '=' as string,
-      },
+      } as Record<string, string>,
       form: {
         startTime: new Date(new Date().getTime() - 1000 * 15),
-        endTime: null,
+        endTime: null as Date | null,
         interval: '',
         namespace: [] as string[],
         source: [] as string[],
@@ -183,7 +183,7 @@ export default Vue.extend({
         level: [] as string[],
         buildCommit: [] as string[],
         configHash: [] as string[],
-        message: '',
+        message: '' as string,
       } as Form,
       defaultParams: [
         { key: 'level', name: 'Level', type: 'level' },
@@ -297,9 +297,15 @@ export default Vue.extend({
       this.tagsInput = text;
     },
     convertInterval(val: string): Date {
-      const values = IntervalRegexp.exec(val);
-      const num = parseInt(values[1], 10);
-      const t = values[2];
+      let num = 0 as number;
+      let t = '' as string;
+
+      for (let result = IntervalRegexp.exec(val); result !== null; result = IntervalRegexp.exec(val)) {
+        const [, numStr, tt] = result;
+
+        num = parseInt(numStr, 10);
+        t = tt;
+      }
 
       let offset = 0;
 
@@ -329,10 +335,10 @@ export default Vue.extend({
       return new Date(new Date().getTime() - offset);
     },
     search(): void {
-      let time = this.form.startTime;
+      let time = this.form.startTime as Date;
 
       if (this.form.interval !== '0') {
-        time = this.convertInterval(this.form.interval);
+        time = this.convertInterval(this.form.interval as string);
       }
 
       const params = [
@@ -393,7 +399,8 @@ export default Vue.extend({
           value: this.form.configHash,
         },
       ].forEach((h) => {
-        if (h.value.length > 0) {
+        const val = h.value as string[];
+        if (val.length > 0) {
           params.push({
             type: 'column',
             key: h.key,
@@ -451,16 +458,16 @@ export default Vue.extend({
   },
   created() {
     if (this.$route.query.params) {
-      this.params = JSON.parse(decodeURIComponent(this.$route.query.params));
+      this.params = JSON.parse(decodeURIComponent(this.$route.query.params as string));
     }
 
     if (this.$route.query.form) {
-      const form = JSON.parse(decodeURIComponent(this.$route.query.form));
+      const form = JSON.parse(decodeURIComponent(this.$route.query.form as string));
       form.startTime = new Date(form.startTime);
 
       this.form = form;
-
       this.search();
+
       return;
     }
 

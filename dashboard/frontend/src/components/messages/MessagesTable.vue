@@ -15,14 +15,12 @@
         </template>
       </tr>
       </thead>
-      <tbody>
-        <Message
-          v-for="(message, i) in messages"
-          :active-tags="activeTags"
-          :message="message"
-          :key="i">
-        </Message>
-      </tbody>
+      <Message
+        v-for="(message, i) in messages"
+        :active-tags="activeTags"
+        :message="message"
+        :key="i">
+      </Message>
     </table>
   </div>
   <section v-else class="section">
