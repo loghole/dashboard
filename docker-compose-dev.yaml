@@ -28,7 +28,7 @@ services:
       - SERVER_KEY=
 
       - ENABLE_AUTH=true
-      - TOKEN_LIST=secret_token_1, secret_token_2
+      - TOKEN_LIST=secret_token_1 secret_token_2
 
       - LOGGER_LEVEL=debug
 
@@ -89,6 +89,7 @@ services:
     command: go run main.go
     environment:
       - COLLECTOR_URI=http://collector:8080
+      - COLLECTOR_AUTH=secret_token_1
       - COUNT=1000
       - SLEEP=5s
     depends_on:
