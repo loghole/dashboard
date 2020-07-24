@@ -41,14 +41,12 @@ func (s Code) String() string {
 const (
 	ValidMinLimit Code = validationCodes + iota
 	ValidMaxLimit
-	ValidMixOffset
+	ValidMinOffset
 	ValidQueryParamsTypeRequired
 	ValidQueryParamsTypeIn
 	ValidQueryParamsKeyRequired
 	ValidQueryParamsValueRequired
-	ValidQueryParamsValueItemRequired
 	ValidQueryParamsValueItemEmpty
-	ValidQueryParamsValueListRequired
 	ValidQueryParamsValueListEmpty
 	ValidQueryParamsOperatorRequired
 	ValidQueryParamsOperatorIn

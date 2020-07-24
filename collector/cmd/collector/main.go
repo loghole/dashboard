@@ -61,14 +61,20 @@ func main() {
 	entryService := entry.NewService(repository, traceLogger)
 
 	// Init handlers
-	entryHandlers := handlers.NewEntryHandlers(entryService, traceLogger, tracer)
+	var (
+		entryHandlers  = handlers.NewEntryHandlers(entryService, traceLogger, tracer)
+		authMiddleware = handlers.NewAuthMiddleware(viper.GetBool("ENABLE_AUTH"), viper.GetStringSlice("TOKEN_LIST"))
+	)
 
 	srv := initHTTPServer()
 
 	r := srv.Router()
-	r.HandleFunc("/api/v1/store", entryHandlers.StoreItemHandler)
-	r.HandleFunc("/api/v1/store/list", entryHandlers.StoreListHandler)
-	r.HandleFunc("/api/v1/ping", entryHandlers.PingHandler)
+	r.Use(authMiddleware.Middleware)
+
+	r1 := r.PathPrefix("/api/v1").Subrouter()
+	r1.HandleFunc("/store", entryHandlers.StoreItemHandler)
+	r1.HandleFunc("/store/list", entryHandlers.StoreListHandler)
+	r1.HandleFunc("/ping", entryHandlers.PingHandler)
 
 	var errGroup, ctx = errgroup.WithContext(context.Background())
 

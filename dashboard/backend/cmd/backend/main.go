@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"os"
@@ -62,6 +63,7 @@ func main() {
 		listEntryHandlers   = handlers.NewEntryHandlers(entryList, traceLogger)
 		listSuggestHandlers = handlers.NewSuggestHandlers(suggestList, traceLogger)
 		tracingMiddleware   = handlers.NewTracingMiddleware(tracer)
+		compressMiddleware  = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
 	)
 
 	// Init http server
@@ -69,8 +71,9 @@ func main() {
 
 	// Init v1 routes
 	r := srv.Router()
+	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
+
 	r1 := r.PathPrefix("/api/v1").Subrouter()
-	r1.Use(tracingMiddleware.Middleware)
 	r1.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
 	r1.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
 

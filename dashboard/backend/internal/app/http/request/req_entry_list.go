@@ -48,6 +48,10 @@ func (r *ListEntryRequest) ToInput() *usecases.ListEntryIn {
 	}
 
 	for _, val := range r.Params {
+		if val.Value.isEmpty() {
+			continue
+		}
+
 		query.Params = append(query.Params, &domain.QueryParam{
 			Type:     val.Type,
 			Key:      val.Key,
@@ -70,7 +74,7 @@ func (r *ListEntryRequest) limitRules() []validation.Rule {
 
 func (r *ListEntryRequest) offsetRules() []validation.Rule {
 	return []validation.Rule{
-		validation.Min(int64(0)).ErrorCode(codes.ValidMixOffset.String()),
+		validation.Min(int64(0)).ErrorCode(codes.ValidMinOffset.String()),
 	}
 }
 
@@ -129,6 +133,10 @@ type ParamValue struct {
 	List []string `json:"list"`
 }
 
+func (p *ParamValue) isEmpty() bool {
+	return len(p.List) == 0 && p.Item == ""
+}
+
 func (p *ParamValue) Validate() error {
 	return validation.ValidateStruct(p,
 		validation.Field(&p.Item, p.itemRules()...),
@@ -138,14 +146,12 @@ func (p *ParamValue) Validate() error {
 
 func (p *ParamValue) itemRules() []validation.Rule {
 	return []validation.Rule{
-		validation.When(p.List == nil, validation.Required.ErrorCode(codes.ValidQueryParamsValueItemRequired.String())),
 		validation.When(p.List != nil, validation.In("").ErrorCode(codes.ValidQueryParamsValueItemEmpty.String())),
 	}
 }
 
 func (p *ParamValue) listRules() []validation.Rule {
 	return []validation.Rule{
-		validation.When(p.Item == "", validation.Required.ErrorCode(codes.ValidQueryParamsValueListRequired.String())),
 		validation.When(p.Item != "", validation.Length(0, 0).ErrorCode(codes.ValidQueryParamsValueListEmpty.String())),
 	}
 }

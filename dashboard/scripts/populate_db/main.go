@@ -21,11 +21,10 @@ func main() {
 	time.Sleep(viper.GetDuration("SLEEP"))
 
 	// init writer
-	writer, err := lhw.NewWriter(lhw.Config{
-		NodeURIs: []string{viper.GetString("COLLECTOR_URI")},
-		Insecure: true,
-		Logger:   log.New(os.Stdout, "", log.LstdFlags),
-	})
+	writer, err := lhw.NewWriter(
+		lhw.NodeWithAuth(viper.GetString("COLLECTOR_URI"), viper.GetString("COLLECTOR_AUTH")),
+		lhw.WithInsecure(), lhw.WithLogger(log.New(os.Stdout, "", log.LstdFlags)),
+	)
 	if err != nil {
 		log.Fatalln("init writer failed", err)
 	}
