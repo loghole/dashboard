@@ -70,9 +70,11 @@ func main() {
 
 	r := srv.Router()
 	r.Use(authMiddleware.Middleware)
-	r.HandleFunc("/api/v1/store", entryHandlers.StoreItemHandler)
-	r.HandleFunc("/api/v1/store/list", entryHandlers.StoreListHandler)
-	r.HandleFunc("/api/v1/ping", entryHandlers.PingHandler)
+
+	r1 := r.PathPrefix("/api/v1").Subrouter()
+	r1.HandleFunc("/store", entryHandlers.StoreItemHandler)
+	r1.HandleFunc("/store/list", entryHandlers.StoreListHandler)
+	r1.HandleFunc("/ping", entryHandlers.PingHandler)
 
 	var errGroup, ctx = errgroup.WithContext(context.Background())
 

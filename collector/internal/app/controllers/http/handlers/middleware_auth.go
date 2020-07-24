@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	_AuthorizationHeader = "Authorization"
+	authorizationHeader = "Authorization"
 )
 
 type AuthMiddleware struct {
@@ -33,7 +33,7 @@ func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		auth := strings.TrimSpace(r.Header.Get(_AuthorizationHeader))
+		auth := strings.TrimSpace(r.Header.Get(authorizationHeader))
 		if auth == "" {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
@@ -52,7 +52,7 @@ func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 
 		// if we authenticated successfully, go ahead and remove the bearer token so that no one
 		// is ever tempted to use it inside of the API server
-		r.Header.Del(_AuthorizationHeader)
+		r.Header.Del(authorizationHeader)
 
 		next.ServeHTTP(w, r)
 	})

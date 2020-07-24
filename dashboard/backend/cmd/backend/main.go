@@ -71,8 +71,9 @@ func main() {
 
 	// Init v1 routes
 	r := srv.Router()
+	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
+
 	r1 := r.PathPrefix("/api/v1").Subrouter()
-	r1.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
 	r1.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
 	r1.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
 
