@@ -1,7 +1,5 @@
-# Build Frontend
-
-# node:14.2.0-alpine
-FROM node@sha256:fa653973ad8abe2690dc90d1f46a9e0c458b0ea1c069b46a686b3610dea8da9c as ui_builder
+# BUILD FRONTEND
+FROM node:14.2.0-alpine as ui_builder
 
 WORKDIR /usr/src/app
 
@@ -14,10 +12,8 @@ COPY ./frontend/ ./
 
 RUN yarn build
 
-# Build Backend
-
-#golang:1.14.2-alpine
-FROM golang@sha256:b0678825431fd5e27a211e0d7581d5f24cede6b4d25ac1411416fa8044fa6c51 as go_builder
+# BUILD BACKEND
+FROM golang:1.14.2-alpine as go_builder
 
 RUN apk add --no-cache ca-certificates tzdata git
 
@@ -46,20 +42,20 @@ COPY ./backend ./
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app cmd/backend/*.go
 
-# Build final container
-
+# BUILD FINAL CONTAINER
 FROM scratch as final
+
 COPY --from=go_builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=go_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
 COPY --from=go_builder /etc/passwd /etc/passwd
 COPY --from=go_builder /etc/group /etc/group
-
 COPY --from=go_builder /app /app
+
 COPY --from=ui_builder /usr/src/app/dist/ /static/
 
 USER appuser:appuser
 
+# Set frontend static dir
 ENV FRONTEND_PATH=./static
 
 CMD ["/app"]
