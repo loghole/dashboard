@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/squirrel v1.4.0
 	github.com/gadavy/ozzo-validation/v4 v4.3.2
 	github.com/gadavy/tracing v0.2.1
+	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lissteron/simplerr v0.4.0

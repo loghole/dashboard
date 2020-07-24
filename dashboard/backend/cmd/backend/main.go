@@ -64,6 +64,7 @@ func main() {
 		listSuggestHandlers = handlers.NewSuggestHandlers(suggestList, traceLogger)
 		tracingMiddleware   = handlers.NewTracingMiddleware(tracer)
 		compressMiddleware  = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
+		filesHandler        = handlers.NewFilesHanlder("path")
 	)
 
 	// Init http server
@@ -73,11 +74,13 @@ func main() {
 	r := srv.Router()
 	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
 
+	r.PathPrefix("/").Handler(filesHandler.Handler()).Methods("GET")
+
 	r1 := r.PathPrefix("/api/v1").Subrouter()
 	r1.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
 	r1.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
 
-	var errGroup, ctx = errgroup.WithContext(context.Background())
+	errGroup, ctx := errgroup.WithContext(context.Background())
 
 	errGroup.Go(func() error {
 		logger.Infof("start http server on: %s", srv.Addr())
