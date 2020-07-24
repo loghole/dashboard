@@ -105,7 +105,7 @@ export default Vue.extend({
         this.start = null;
         this.end = null;
 
-        this.name = '15s';
+        this.name = '5m';
 
         return;
       }

@@ -175,7 +175,7 @@ export default Vue.extend({
       form: {
         startTime: new Date(new Date().getTime() - 1000 * 15),
         endTime: null as Date | null,
-        interval: '',
+        interval: '5m',
         namespace: [] as string[],
         source: [] as string[],
         traceID: [] as string[],
@@ -203,6 +203,7 @@ export default Vue.extend({
       tags: [] as string[],
       showTags: [],
       messages: [],
+      showAdditionalParam: false,
     };
   },
   computed: {
@@ -273,14 +274,14 @@ export default Vue.extend({
       this.tagsInput = text;
     },
     convertInterval(val: string): Date {
-      let num = 0 as number;
-      let t = '' as string;
+      const values = IntervalRegexp.exec(val);
 
-      for (let result = IntervalRegexp.exec(val); result !== null; result = IntervalRegexp.exec(val)) {
-        const [, numStr, tt] = result;
+      let t = '';
+      let num = 0;
 
-        num = parseInt(numStr, 10);
-        t = tt;
+      if (values !== null) {
+        num = parseInt(values[1], 10);
+        t = values[2] as string;
       }
 
       let offset = 0;
