@@ -11,7 +11,7 @@ interface ParamValue {
 }
 
 interface Form {
-  [key: string]: Date | string | string[] | null
+  [key: string]: Date | string | string[] | null;
 }
 
 interface SearchParam {
