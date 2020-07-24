@@ -95,8 +95,8 @@ export default Vue.extend({
         '1d',
         '7d',
         '14d',
-      ],
-      hasError: false,
+      ] as string[],
+      hasError: false as boolean,
     };
   },
   watch: {
@@ -118,18 +118,18 @@ export default Vue.extend({
       get() {
         return this.startTime;
       },
-      set(newValue) {
+      set(newValue: string) {
         this.$emit('setStartTime', newValue);
       },
-    },
+    } as any,
     end: {
       get() {
         return this.endTime;
       },
-      set(newValue) {
+      set(newValue: string) {
         this.$emit('setEndTime', newValue);
       },
-    },
+    } as any,
     name: {
       get() {
         return this.interval;
@@ -144,20 +144,23 @@ export default Vue.extend({
 
         this.$emit('setInterval', newValue);
       },
-    },
+    } as any,
     filteredDataArray() {
-      const arr = this.data.filter(
-        (option) => option
+      const name = this.name as string;
+      const data = this.data as string[];
+
+      const arr = data.filter(
+        (option: string) => option
           .toString()
           .toLowerCase()
-          .indexOf(this.name.toLowerCase()) >= 0,
+          .indexOf(name.toLowerCase()) >= 0,
       );
 
-      if (arr.length === 1 && this.name === arr[0]) {
-        return [];
+      if (arr.length === 1 && name === arr[0]) {
+        return [] as string[];
       }
 
-      return arr;
+      return arr as string[];
     },
   },
   mounted() {

@@ -60,7 +60,11 @@ export default Vue.extend({
       return this.type !== '';
     },
     filteredTags() {
-      return FilterTags(this.tags, this.value, this.text);
+      const tags = this.tags as string[];
+      const value = this.value as string[];
+      const text = this.text as string;
+
+      return FilterTags(tags, value, text);
     },
   },
   methods: {

@@ -1,4 +1,3 @@
-
 interface Param {
   type: string;
   operator: string;
@@ -12,17 +11,7 @@ interface ParamValue {
 }
 
 interface Form {
-  startTime: Date;
-  endTime: any;
-  interval: string,
-  namespace: string[];
-  source: string[];
-  traceID: string[];
-  host: string[];
-  level: string[];
-  buildCommit: string[];
-  configHash: string[];
-  message: string;
+  [key: string]: Date | string | string[] | null
 }
 
 interface SearchParam {
@@ -31,4 +20,4 @@ interface SearchParam {
   type: string;
 }
 
-export { Param, Form, ParamValue, SearchParam }
+export { Param, Form, ParamValue, SearchParam };
