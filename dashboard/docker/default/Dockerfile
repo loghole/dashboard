@@ -6,14 +6,14 @@ WORKDIR /usr/src/app
 COPY ./frontend/package.json ./package.json
 COPY ./frontend/yarn.lock ./yarn.lock
 
-RUN yarn
+RUN yarn install
 
 COPY ./frontend/ ./
 
 RUN yarn build
 
 # BUILD BACKEND
-FROM golang:1.14.2-alpine as go_builder
+FROM golang:1.14.6-alpine as go_builder
 
 RUN apk add --no-cache ca-certificates tzdata git
 

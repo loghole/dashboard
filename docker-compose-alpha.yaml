@@ -16,7 +16,7 @@ services:
       - "16686:16686"
 
   collector:
-    image: collector:latest
+    image: loghole/collector:latest
     build:
       context: ./collector
       dockerfile: ./docker/default/Dockerfile
@@ -36,16 +36,13 @@ services:
       - CLICKHOUSE_USER=
       - CLICKHOUSE_DATABASE=logs
       - CLICKHOUSE_SCHEMA_PATH=/db/init.sql
-
-      - JAEGER_URI=jaeger:6831
     ports:
       - 50000:8080
     depends_on:
       - clickhouse
-      - jaeger
 
   dashboard:
-    image: dashboard:latest
+    image: loghole/dashboard:latest
     build:
       context: ./dashboard
       dockerfile: ./docker/default/Dockerfile
@@ -61,7 +58,6 @@ services:
       - 8080:8080
     depends_on:
       - clickhouse
-      - jaeger
 
   populate_db:
     image: golang:1.14-alpine
