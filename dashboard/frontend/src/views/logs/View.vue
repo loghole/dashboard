@@ -1,9 +1,5 @@
 <template>
   <div class="columns p-2 pt-4">
-    <!-- add param
-    <Sidebar v-model="showAddParam" v-on:save="saveParam"></Sidebar> -->
-    <!-- add param -->
-
     <div class="column page-menu">
       <!-- date -->
       <b-field>
