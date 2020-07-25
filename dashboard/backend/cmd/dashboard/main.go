@@ -79,6 +79,7 @@ func main() {
 	// Init v1 routes
 	r := srv.Router()
 	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
+	r.HandleFunc("/", handlers.NewRedirectHandler("/ui/"))
 
 	r1 := r.PathPrefix("/ui/")
 	r1.Handler(http.StripPrefix("/ui/", filesHandlers.Handler())).Methods("GET")
