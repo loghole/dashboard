@@ -6,14 +6,14 @@ import (
 	"net/http"
 )
 
-type FilesHandler struct {
+type FilesHandlers struct {
 	path string
 }
 
-func NewFilesHandler(path string) *FilesHandler {
-	return &FilesHandler{path: path}
+func NewFilesHandlers(path string) *FilesHandlers {
+	return &FilesHandlers{path: path}
 }
 
-func (h *FilesHandler) Handler() http.Handler {
+func (h *FilesHandlers) Handler() http.Handler {
 	return http.FileServer(http.Dir(h.path))
 }

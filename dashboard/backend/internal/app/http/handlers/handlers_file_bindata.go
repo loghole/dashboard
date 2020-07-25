@@ -8,12 +8,12 @@ import (
 	"github.com/lissteron/loghole/dashboard/bindata"
 )
 
-type FilesHandler struct{}
+type FilesHandlers struct{}
 
-func NewFilesHandler(_ string) *FilesHandler {
-	return &FilesHandler{}
+func NewFilesHandlers(_ string) *FilesHandlers {
+	return &FilesHandlers{}
 }
 
-func (h *FilesHandler) Handler() http.Handler {
+func (h *FilesHandlers) Handler() http.Handler {
 	return http.FileServer(bindata.AssetFile())
 }

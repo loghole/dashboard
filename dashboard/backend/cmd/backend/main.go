@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -33,6 +34,8 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stdout, "init logger failed: %v", err)
 		os.Exit(1)
 	}
+
+	logger.Infof("Version: %s, GitHash: %s, BuildAt: %s", config.Version, config.GitHash, config.BuildAt)
 
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
@@ -64,7 +67,8 @@ func main() {
 		listSuggestHandlers = handlers.NewSuggestHandlers(suggestList, traceLogger)
 		tracingMiddleware   = handlers.NewTracingMiddleware(tracer)
 		compressMiddleware  = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
-		filesHandler        = handlers.NewFilesHandler(viper.GetString("FRONTEND_PATH"))
+		filesHandler        = handlers.NewFilesHandlers(viper.GetString("FRONTEND_PATH"))
+		infoHandlers        = handlers.NewInfoHandlers(traceLogger)
 	)
 
 	// Init http server
@@ -74,18 +78,19 @@ func main() {
 	r := srv.Router()
 	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
 
-	r.PathPrefix("/").Handler(filesHandler.Handler()).Methods("GET")
+	r.PathPrefix("/ui").Handler(http.StripPrefix("/ui", filesHandler.Handler())).Methods("GET")
 
 	r1 := r.PathPrefix("/api/v1").Subrouter()
 	r1.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
 	r1.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
+
+	r1.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
 
 	errGroup, ctx := errgroup.WithContext(context.Background())
 
 	errGroup.Go(func() error {
 		logger.Infof("start http server on: %s", srv.Addr())
 		return srv.ListenAndServe()
-
 	})
 
 	select {

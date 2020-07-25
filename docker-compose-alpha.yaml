@@ -42,10 +42,7 @@ services:
       - clickhouse
 
   dashboard:
-    image: loghole/dashboard:latest
-    build:
-      context: ./dashboard
-      dockerfile: ./docker/default/Dockerfile
+    image: loghole/dashboard:v0.1.0
     volumes:
       - ./database/:/db
     environment:

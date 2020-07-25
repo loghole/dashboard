@@ -15,6 +15,12 @@ RUN yarn build
 # BUILD BACKEND
 FROM golang:1.14.6-alpine as go_builder
 
+ARG APP_NAME
+ARG SERVICE_NAME
+ARG CMD_NAME
+ARG VERSION
+ARG GIT_HASH
+
 RUN apk add --no-cache ca-certificates tzdata git
 
 # Create appuser.
@@ -40,7 +46,14 @@ RUN go mod download && go mod verify
 
 COPY ./backend ./
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app cmd/backend/*.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s \
+    -X github.com/lissteron/loghole/dashboard/config.ServiceName=$SERVICE_NAME \
+    -X github.com/lissteron/loghole/dashboard/config.AppName=$APP_NAME \
+    -X github.com/lissteron/loghole/dashboard/config.GitHash=$GIT_HASH \
+    -X github.com/lissteron/loghole/dashboard/config.Version=$VERSION \
+    -X github.com/lissteron/loghole/dashboard/config.BuildAt=$(date --utc +%FT%TZ) \
+    " -o /app cmd/backend/*.go
 
 # BUILD FINAL CONTAINER
 FROM scratch as final
