@@ -32,6 +32,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger.Infof("Version: %s, GitHash: %s, BuildAt: %s", config.Version, config.GitHash, config.BuildAt)
+
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -63,6 +65,7 @@ func main() {
 	// Init handlers
 	var (
 		entryHandlers  = handlers.NewEntryHandlers(entryService, traceLogger, tracer)
+		infoHandlers   = handlers.NewInfoHandlers(traceLogger)
 		authMiddleware = handlers.NewAuthMiddleware(viper.GetBool("ENABLE_AUTH"), viper.GetStringSlice("TOKEN_LIST"))
 	)
 
@@ -75,6 +78,7 @@ func main() {
 	r1.HandleFunc("/store", entryHandlers.StoreItemHandler)
 	r1.HandleFunc("/store/list", entryHandlers.StoreListHandler)
 	r1.HandleFunc("/ping", entryHandlers.PingHandler)
+	r1.HandleFunc("/info", infoHandlers.InfoHandler)
 
 	var errGroup, ctx = errgroup.WithContext(context.Background())
 

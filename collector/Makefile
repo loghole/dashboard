@@ -1,17 +1,34 @@
-APP = collector
+APP_NAME     ?= github.com/lissteron/loghole/collector
+SERVICE_NAME ?= $(shell basename $(dir $(abspath $(firstword $(MAKEFILE_LIST)))))
 
-GOBUILD_TARGET = $(APP)
-GOFLAGS = CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-GOTEST_PACKAGES = $(shell go list ./... | egrep -v '(pkg|cmd)')
+DOCKERFILE   = docker/default/Dockerfile
+DOCKER_IMAGE = loghole/$(SERVICE_NAME)
 
-gomod:
+VERSION  ?= $$(git describe --tags)
+GIT_HASH := $$(git rev-parse HEAD)
+
+ifdef VERSION
+VERSION = local
+endif
+
+GO_TEST_PACKAGES = $(shell go list ./... | egrep -v '(pkg|cmd)')
+
+go-mod:
 	go mod download
 
-gobuild: clean
-	$(GOFLAGS) go build -o ./bin/$(GOBUILD_TARGET) cmd/$(GOBUILD_TARGET)/main.go
+go-test:
+	go test -race -v -cover -coverprofile coverage.out $(GO_TEST_PACKAGES)
 
-gotest:
-	go test -race -v -cover -coverprofile coverage.out $(GOTEST_PACKAGES)
-
-golint:
+go-lint:
 	golangci-lint run -v
+
+docker-image:
+	docker build \
+	--build-arg APP_NAME=$(APP_NAME) \
+	--build-arg SERVICE_NAME=$(SERVICE_NAME) \
+	--build-arg GIT_HASH=$(GIT_HASH) \
+	--build-arg VERSION=$(VERSION) \
+	-f $(DOCKERFILE) \
+	-t $(DOCKER_IMAGE) \
+	-t $(DOCKER_IMAGE):$(VERSION) \
+	.

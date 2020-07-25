@@ -1,6 +1,12 @@
 # BUILD BACKEND
 FROM golang:1.14.6-alpine as builder
 
+ARG APP_NAME
+ARG SERVICE_NAME
+ARG CMD_NAME
+ARG VERSION
+ARG GIT_HASH
+
 RUN apk add --no-cache ca-certificates tzdata git
 
 # Create appuser.
@@ -24,7 +30,14 @@ RUN go mod download && go mod verify
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /app cmd/collector/*.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s \
+    -X $APP_NAME/config.ServiceName=$SERVICE_NAME \
+    -X $APP_NAME/config.AppName=$APP_NAME \
+    -X $APP_NAME/config.GitHash=$GIT_HASH \
+    -X $APP_NAME/config.Version=$VERSION \
+    -X $APP_NAME/config.BuildAt=$(date --utc +%FT%TZ) \
+    " -o /app cmd/$SERVICE_NAME/*.go
 
 # BUILD FINAL CONTAINER
 FROM scratch as final

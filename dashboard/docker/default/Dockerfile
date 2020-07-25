@@ -39,21 +39,19 @@ RUN adduser \
 
 WORKDIR /src
 
-COPY ./backend/go.mod /go.mod
-COPY ./backend/go.sum /go.sum
-
+COPY ./backend/go.mod ./backend/go.sum ./
 RUN go mod download && go mod verify
 
 COPY ./backend ./
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s \
-    -X github.com/lissteron/loghole/dashboard/config.ServiceName=$SERVICE_NAME \
-    -X github.com/lissteron/loghole/dashboard/config.AppName=$APP_NAME \
-    -X github.com/lissteron/loghole/dashboard/config.GitHash=$GIT_HASH \
-    -X github.com/lissteron/loghole/dashboard/config.Version=$VERSION \
-    -X github.com/lissteron/loghole/dashboard/config.BuildAt=$(date --utc +%FT%TZ) \
-    " -o /app cmd/backend/*.go
+    -X $APP_NAME/config.ServiceName=$SERVICE_NAME \
+    -X $APP_NAME/config.AppName=$APP_NAME \
+    -X $APP_NAME/config.GitHash=$GIT_HASH \
+    -X $APP_NAME/config.Version=$VERSION \
+    -X $APP_NAME/config.BuildAt=$(date --utc +%FT%TZ) \
+    " -o /app cmd/$SERVICE_NAME/*.go
 
 # BUILD FINAL CONTAINER
 FROM scratch as final

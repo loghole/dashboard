@@ -16,10 +16,10 @@ services:
       - "16686:16686"
 
   collector:
-    image: loghole/collector:latest
+    image: loghole/collector:local
     build:
       context: ./collector
-      dockerfile: ./docker/default/Dockerfile
+      dockerfile: collector/Dockerfile
     volumes:
       - ./database/:/db
     environment:
@@ -42,7 +42,7 @@ services:
       - clickhouse
 
   dashboard:
-    image: loghole/dashboard:v0.1.0
+    image: loghole/dashboard:local
     volumes:
       - ./database/:/db
     environment:

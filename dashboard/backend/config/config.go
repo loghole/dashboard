@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-//nolint:gochecknoglobals // build args
+// nolint:gochecknoglobals // build args
 var (
 	ServiceName string
 	AppName     string

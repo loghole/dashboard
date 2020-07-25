@@ -31,7 +31,7 @@ func main() {
 
 	logger, err := initLogger()
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "init logger failed: %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "init logger failed: %v", err)
 		os.Exit(1)
 	}
 
@@ -49,14 +49,14 @@ func main() {
 	traceLogger := tracing.NewTraceLogger(logger)
 
 	// Init clients
-	clickhousedb, err := initClickhouse()
+	clickhouseDB, err := initClickhouse()
 	if err != nil {
 		logger.Fatalf("init clickhouse db client failed: %v", err)
 	}
 
 	var (
 		// Init repositories
-		repository = clickhouse.NewRepository(clickhousedb.Client(), traceLogger)
+		repository = clickhouse.NewRepository(clickhouseDB.Client(), traceLogger)
 
 		// Init use cases
 		entryList   = usecases.NewListEntry(repository, traceLogger)
@@ -81,10 +81,10 @@ func main() {
 	r.PathPrefix("/ui").Handler(http.StripPrefix("/ui", filesHandler.Handler())).Methods("GET")
 
 	r1 := r.PathPrefix("/api/v1").Subrouter()
+	r1.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
+
 	r1.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
 	r1.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
-
-	r1.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
 
 	errGroup, ctx := errgroup.WithContext(context.Background())
 
@@ -112,7 +112,7 @@ func main() {
 		logger.Errorf("error while stopping tracer: %v", err)
 	}
 
-	if err = clickhousedb.Close(); err != nil {
+	if err = clickhouseDB.Close(); err != nil {
 		logger.Errorf("error while stopping clickhouse db: %v", err)
 	}
 
