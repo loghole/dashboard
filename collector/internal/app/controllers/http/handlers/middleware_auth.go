@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 )
@@ -24,6 +25,8 @@ func NewAuthMiddleware(enabled bool, tokens []string) *AuthMiddleware {
 		middleware.tokens[strings.TrimSpace(token)] = struct{}{}
 	}
 
+	log.Println(middleware.tokens)
+
 	return middleware
 }
 
@@ -34,13 +37,15 @@ func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := strings.TrimSpace(r.Header.Get(authorizationHeader))
+
 		if auth == "" {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
 		parts := strings.Split(auth, " ")
-		if len(parts) < 2 || strings.ToLower(parts[0]) != "bearer" {
+
+		if len(parts) < 2 || !strings.EqualFold(parts[0], "bearer") {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}

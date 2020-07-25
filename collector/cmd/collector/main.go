@@ -80,7 +80,7 @@ func main() {
 	r1.HandleFunc("/store/list", entryHandlers.StoreListHandler)
 	r1.HandleFunc("/ping", entryHandlers.PingHandler)
 
-	var errGroup, ctx = errgroup.WithContext(context.Background())
+	errGroup, ctx := errgroup.WithContext(context.Background())
 
 	errGroup.Go(func() error {
 		logger.Info("start entry writer")
