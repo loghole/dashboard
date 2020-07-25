@@ -59,16 +59,3 @@ services:
     depends_on:
       - clickhouse
 
-  populate_db:
-    image: golang:1.14-alpine
-    volumes:
-      - ./dashboard/scripts/:/app
-    working_dir: /app/populate_db/
-    command: go run main.go
-    environment:
-      - COLLECTOR_URI=http://collector:8080
-      - COLLECTOR_AUTH=secret_token_1
-      - COUNT=1000
-      - SLEEP=5s
-    depends_on:
-      - dashboard
