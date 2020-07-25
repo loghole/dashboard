@@ -17,14 +17,14 @@
       <td v-else>
         <dl class="tag-source">
           <template v-for="(value, name, i) in message">
+            <template v-if="showField(name, value)">
             <dt
               class="tag-name"
-              v-if="showField(name)"
               :key="`tag_name_${i}`">{{ name }}:</dt>
             <dd
               class="tag-value"
-              v-if="showField(name)"
               :key="`tag_value_${i}`">{{ prepareText(name, value) }}</dd>
+            </template>
           </template>
         </dl>
       </td>
@@ -78,8 +78,8 @@ export default Vue.extend({
     buildDatetime(text: string): string {
       return new Date(text).toLocaleString(window.navigator.language);
     },
-    showField(name: string): boolean {
-      return name !== 'params';
+    showField(name: string, value: string): boolean {
+      return name !== 'params' && value !== '';
     },
     showJSON(): void {
       this.jsonBlockIsShowed = !this.jsonBlockIsShowed;

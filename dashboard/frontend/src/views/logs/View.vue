@@ -92,7 +92,7 @@
         </button>
         <!-- // add param -->
       </div>
-      <b-button class="button is-primary is-fullwidth" @click="search"
+      <b-button :loading="loadingState" class="button is-primary is-fullwidth" @click="search"
         >Search</b-button
       >
     </div>
@@ -102,7 +102,7 @@
         <!-- Showed tags -->
         <div class="column">
           <b-taginput
-            v-model="showTags"
+            v-model="showedTags"
             :data="filteredTags"
             autocomplete
             :allow-new="true"
@@ -125,7 +125,7 @@
               v-model="form.message"
             ></b-input>
             <p class="control">
-              <b-button class="button is-primary">Search</b-button>
+              <b-button :loading="loadingState" class="button is-primary" @click="search">Search</b-button>
             </p>
           </b-field>
         </div>
@@ -133,7 +133,7 @@
 
       <!-- messages table -->
       <MessagesTable
-        :activeTags="showTags"
+        :activeTags="showedTags"
         :messages="messages"
       ></MessagesTable>
       <!-- // entry table -->
@@ -201,14 +201,15 @@ export default Vue.extend({
       newParamName: '',
       tagsInput: '',
       tags: [] as string[],
-      showTags: [],
+      showedTags: [],
       messages: [],
       showAdditionalParam: false,
+      loadingState: false,
     };
   },
   computed: {
     filteredTags(): string[] {
-      return FilterTags(this.tags, this.showTags, this.tagsInput);
+      return FilterTags(this.tags, this.showedTags, this.tagsInput);
     },
   },
   methods: {
@@ -398,11 +399,12 @@ export default Vue.extend({
 
       // console.log(JSON.stringify(params));
 
-      if (decodeURIComponent(window.location.search) !== decodeURIComponent(this.getFullURL())) {
-        this.$router.push(
-          `${window.location.pathname}${this.getFullURL()}`,
-        );
+      if (decodeURIComponent(window.location.hash) !== `#/logs/view${decodeURIComponent(this.getFullURL())}`) {
+        this.$router.push(this.getFullURL());
       }
+
+      const startUT = new Date().getTime();
+      this.loadingState = true;
 
       Vue.axios
         .post('/api/v1/entry/list', { params, limit: 100 })
@@ -412,13 +414,27 @@ export default Vue.extend({
           this.setTags(response.data.data);
         })
         .catch((e) => {
+          this.$buefy.notification.open({
+            duration: 5000,
+            message: e.message,
+            position: 'is-bottom-right',
+            type: 'is-danger',
+            hasIcon: true,
+          });
+
           console.error(e);
+        }).then(() => {
+          const diff = new Date().getTime() - startUT;
+
+          setTimeout(() => {
+            this.loadingState = false;
+          }, 250 - diff);
         });
     },
     getFullURL(): string {
-      return `?form=${this.getURL(this.form)}&params=${this.getURL(this.params)}`;
+      return `?form=${this.getURL(this.form)}&params=${this.getURL(this.params)}&tags=${this.getURL(this.showedTags)}`;
     },
-    getURL(param: Form | Param[]): string {
+    getURL(param: Form | Param[] | string[]): string {
       return encodeURIComponent(JSON.stringify(param));
     },
     setTags(list: Array<any>): void {
@@ -436,6 +452,10 @@ export default Vue.extend({
   created() {
     if (this.$route.query.params) {
       this.params = JSON.parse(decodeURIComponent(this.$route.query.params as string));
+    }
+
+    if (this.$route.query.tags) {
+      this.showedTags = JSON.parse(decodeURIComponent(this.$route.query.tags as string));
     }
 
     if (this.$route.query.form) {
