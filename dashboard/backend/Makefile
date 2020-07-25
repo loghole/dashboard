@@ -1,17 +1,11 @@
-APP = backend
+GO_TEST_PACKAGES = $(shell go list ./... | egrep -v '(pkg|cmd)')
 
-GOBUILD_TARGET = $(APP)
-GOFLAGS = CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-GOTEST_PACKAGES = $(shell go list ./... | egrep -v '(pkg|cmd)')
-
-gomod:
+go-mod:
 	go mod download
 
-gobuild: clean
-	$(GOFLAGS) go build -o ./bin/$(GOBUILD_TARGET) cmd/$(GOBUILD_TARGET)/main.go
+go-test:
+	go test -race -v -cover -coverprofile coverage.out $(GO_TEST_PACKAGES)
 
-gotest:
-	go test -race -v -cover -coverprofile coverage.out $(GOTEST_PACKAGES)
-
-golint:
+go-lint:
 	golangci-lint run -v
+
