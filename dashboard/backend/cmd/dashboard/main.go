@@ -65,10 +65,12 @@ func main() {
 		// Init http handlers
 		listEntryHandlers   = handlers.NewEntryHandlers(entryList, traceLogger)
 		listSuggestHandlers = handlers.NewSuggestHandlers(suggestList, traceLogger)
-		tracingMiddleware   = handlers.NewTracingMiddleware(tracer)
-		compressMiddleware  = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
-		filesHandler        = handlers.NewFilesHandlers(viper.GetString("FRONTEND_PATH"))
+		filesHandlers       = handlers.NewFilesHandlers(viper.GetString("FRONTEND_PATH"))
 		infoHandlers        = handlers.NewInfoHandlers(traceLogger)
+
+		// Init http middleware
+		tracingMiddleware  = handlers.NewTracingMiddleware(tracer)
+		compressMiddleware = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
 	)
 
 	// Init http server
@@ -78,13 +80,13 @@ func main() {
 	r := srv.Router()
 	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
 
-	r.PathPrefix("/ui").Handler(http.StripPrefix("/ui", filesHandler.Handler())).Methods("GET")
+	r1 := r.PathPrefix("/ui/")
+	r1.Handler(http.StripPrefix("/ui/", filesHandlers.Handler())).Methods("GET")
 
-	r1 := r.PathPrefix("/api/v1").Subrouter()
-	r1.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
-
-	r1.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
-	r1.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
+	r2 := r.PathPrefix("/api/v1").Subrouter()
+	r2.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
+	r2.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
+	r2.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
 
 	errGroup, ctx := errgroup.WithContext(context.Background())
 
