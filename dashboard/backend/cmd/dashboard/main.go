@@ -78,13 +78,14 @@ func main() {
 
 	// Init v1 routes
 	r := srv.Router()
-	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
+	r.Use(compressMiddleware.Middleware)
 	r.HandleFunc("/", handlers.NewRedirectHandler("/ui/"))
 
 	r1 := r.PathPrefix("/ui/")
 	r1.Handler(http.StripPrefix("/ui/", filesHandlers.Handler())).Methods("GET")
 
 	r2 := r.PathPrefix("/api/v1").Subrouter()
+	r2.Use(tracingMiddleware.Middleware)
 	r2.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
 	r2.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
 	r2.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")

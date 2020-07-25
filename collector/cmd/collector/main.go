@@ -72,13 +72,13 @@ func main() {
 	srv := initHTTPServer()
 
 	r := srv.Router()
-	r.Use(authMiddleware.Middleware)
+	r.HandleFunc("/api/v1/info", infoHandlers.InfoHandler)
 
 	r1 := r.PathPrefix("/api/v1").Subrouter()
+	r1.Use(authMiddleware.Middleware)
 	r1.HandleFunc("/store", entryHandlers.StoreItemHandler)
 	r1.HandleFunc("/store/list", entryHandlers.StoreListHandler)
 	r1.HandleFunc("/ping", entryHandlers.PingHandler)
-	r1.HandleFunc("/info", infoHandlers.InfoHandler)
 
 	var errGroup, ctx = errgroup.WithContext(context.Background())
 
