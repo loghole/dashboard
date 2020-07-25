@@ -1,7 +1,7 @@
 version: '3'
 services:
-  clickhouse:
-    image: yandex/clickhouse-server
+  clickhouse-db:
+    image: loghole/clickhouse-db:latest
     volumes:
       - './data/clickhouse:/var/lib/clickhouse'
     ports:
@@ -29,14 +29,13 @@ services:
 
       - LOGGER_LEVEL=debug
 
-      - CLICKHOUSE_URI=clickhouse:9000
+      - CLICKHOUSE_URI=clickhouse-db:9000
       - CLICKHOUSE_USER=
       - CLICKHOUSE_DATABASE=logs
-      - CLICKHOUSE_SCHEMA_PATH=/db/init.sql
     ports:
       - 50000:8080
     depends_on:
-      - clickhouse
+      - clickhouse-db
 
   dashboard:
     image: loghole/dashboard:latest
@@ -46,13 +45,10 @@ services:
       - SERVICE_HTTP_PORT=8080
       - LOGGER_LEVEL=debug
 
-      - CLICKHOUSE_URI=clickhouse:9000
+      - CLICKHOUSE_URI=clickhouse-db:9000
       - CLICKHOUSE_USER=
       - CLICKHOUSE_DATABASE=logs
-      - CLICKHOUSE_SCHEMA_PATH=/db/init.sql
     ports:
       - 8080:8080
     depends_on:
-      - clickhouse
- 
-
+      - clickhouse-db
