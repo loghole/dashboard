@@ -8,11 +8,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/gadavy/tracing"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/lissteron/loghole/dashboard/config"
@@ -29,7 +27,7 @@ func main() {
 	// Init config, logger, exit chan
 	config.Init()
 
-	logger, err := initLogger()
+	logger, err := log.NewLogger(config.LoggerConfig())
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init logger failed: %v", err)
 		os.Exit(1)
@@ -41,7 +39,7 @@ func main() {
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
 	// Init jaeger tracer.
-	tracer, err := initTracer()
+	tracer, err := tracing.NewTracer(config.TracerConfig())
 	if err != nil {
 		logger.Fatalf("init tracing client failed: %v", err)
 	}
@@ -49,7 +47,7 @@ func main() {
 	traceLogger := tracing.NewTraceLogger(logger)
 
 	// Init clients
-	clickhouseDB, err := initClickhouse()
+	clickhouseDB, err := clickhouseclient.NewClient(config.ClickhouseConfig())
 	if err != nil {
 		logger.Fatalf("init clickhouse db client failed: %v", err)
 	}
@@ -65,7 +63,7 @@ func main() {
 		// Init http handlers
 		listEntryHandlers   = handlers.NewEntryHandlers(entryList, traceLogger)
 		listSuggestHandlers = handlers.NewSuggestHandlers(suggestList, traceLogger)
-		filesHandlers       = handlers.NewFilesHandlers(viper.GetString("FRONTEND_PATH"))
+		filesHandlers       = handlers.NewFilesHandlers(viper.GetString("frontend.path"))
 		infoHandlers        = handlers.NewInfoHandlers(traceLogger)
 
 		// Init http middleware
@@ -74,7 +72,7 @@ func main() {
 	)
 
 	// Init http server
-	srv := initHTTPServer()
+	srv := server.NewHTTP(config.ServerConfig())
 
 	// Init v1 routes
 	r := srv.Router()
@@ -121,39 +119,4 @@ func main() {
 	}
 
 	logger.Info("application stopped")
-}
-
-func initLogger() (*zap.SugaredLogger, error) {
-	return log.NewLogger(
-		log.SetLevel(viper.GetString("LOGGER_LEVEL")),
-		log.AddCaller(),
-	)
-}
-
-func initTracer() (*tracing.Tracer, error) {
-	return tracing.NewTracer(&tracing.Config{
-		URI:         viper.GetString("JAEGER_URI"),
-		Enabled:     viper.GetString("JAEGER_URI") != "",
-		ServiceName: "dashboard",
-	})
-}
-
-func initClickhouse() (*clickhouseclient.Client, error) {
-	return clickhouseclient.NewClient(&clickhouseclient.Options{
-		Addr:         viper.GetString("CLICKHOUSE_URI"),
-		User:         viper.GetString("CLICKHOUSE_USER"),
-		Database:     viper.GetString("CLICKHOUSE_DATABASE"),
-		ReadTimeout:  viper.GetInt("CLICKHOUSE_READ_TIMEOUT"),
-		WriteTimeout: viper.GetInt("CLICKHOUSE_WRITE_TIMEOUT"),
-		SchemaPath:   viper.GetString("CLICKHOUSE_SCHEMA_PATH"),
-	})
-}
-
-func initHTTPServer() *server.HTTP {
-	return server.NewHTTP(
-		fmt.Sprintf("0.0.0.0:%s", viper.GetString("SERVICE_HTTP_PORT")),
-		server.WithReadTimeout(time.Minute),
-		server.WithWriteTimeout(time.Minute),
-		server.WithIdleTimeout(time.Minute*10), // nolint:gomnd,gocritic
-	)
 }
