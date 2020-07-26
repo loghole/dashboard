@@ -18,6 +18,7 @@ type Logger interface {
 type BaseResponse struct {
 	Status int         `json:"-"`
 	Errors []RespError `json:"errors"`
+	Data   interface{} `json:"data"`
 }
 
 type RespError struct {
@@ -50,4 +51,8 @@ func (r *BaseResponse) ParseError(err error) {
 		Code:   strconv.Itoa(code),
 		Detail: simplerr.GetText(err),
 	})
+}
+
+func (r *BaseResponse) SetData(v interface{}) {
+	r.Data = v
 }

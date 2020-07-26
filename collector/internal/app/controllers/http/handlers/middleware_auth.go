@@ -34,13 +34,15 @@ func (m *AuthMiddleware) Middleware(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		auth := strings.TrimSpace(r.Header.Get(authorizationHeader))
+
 		if auth == "" {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
 
 		parts := strings.Split(auth, " ")
-		if len(parts) < 2 || strings.ToLower(parts[0]) != "bearer" {
+
+		if len(parts) < 2 || !strings.EqualFold(parts[0], "bearer") {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}

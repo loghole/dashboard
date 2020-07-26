@@ -135,12 +135,7 @@ export default Vue.extend({
         return this.interval;
       },
       set(newValue: string) {
-        if (!IntervalRegexp.test(newValue)) {
-          this.hasError = true;
-          return;
-        }
-
-        this.hasError = false;
+        this.hasError = !IntervalRegexp.test(newValue);
 
         this.$emit('setInterval', newValue);
       },

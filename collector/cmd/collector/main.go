@@ -32,6 +32,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	logger.Infof("Version: %s, GitHash: %s, BuildAt: %s", config.Version, config.GitHash, config.BuildAt)
+
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -63,20 +65,22 @@ func main() {
 	// Init handlers
 	var (
 		entryHandlers  = handlers.NewEntryHandlers(entryService, traceLogger, tracer)
+		infoHandlers   = handlers.NewInfoHandlers(traceLogger)
 		authMiddleware = handlers.NewAuthMiddleware(viper.GetBool("ENABLE_AUTH"), viper.GetStringSlice("TOKEN_LIST"))
 	)
 
 	srv := initHTTPServer()
 
 	r := srv.Router()
-	r.Use(authMiddleware.Middleware)
+	r.HandleFunc("/api/v1/info", infoHandlers.InfoHandler)
 
 	r1 := r.PathPrefix("/api/v1").Subrouter()
+	r1.Use(authMiddleware.Middleware)
 	r1.HandleFunc("/store", entryHandlers.StoreItemHandler)
 	r1.HandleFunc("/store/list", entryHandlers.StoreListHandler)
 	r1.HandleFunc("/ping", entryHandlers.PingHandler)
 
-	var errGroup, ctx = errgroup.WithContext(context.Background())
+	errGroup, ctx := errgroup.WithContext(context.Background())
 
 	errGroup.Go(func() error {
 		logger.Info("start entry writer")

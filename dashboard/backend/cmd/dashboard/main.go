@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,9 +31,11 @@ func main() {
 
 	logger, err := initLogger()
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "init logger failed: %v", err)
+		_, _ = fmt.Fprintf(os.Stderr, "init logger failed: %v", err)
 		os.Exit(1)
 	}
+
+	logger.Infof("Version: %s, GitHash: %s, BuildAt: %s", config.Version, config.GitHash, config.BuildAt)
 
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
@@ -46,14 +49,14 @@ func main() {
 	traceLogger := tracing.NewTraceLogger(logger)
 
 	// Init clients
-	clickhousedb, err := initClickhouse()
+	clickhouseDB, err := initClickhouse()
 	if err != nil {
 		logger.Fatalf("init clickhouse db client failed: %v", err)
 	}
 
 	var (
 		// Init repositories
-		repository = clickhouse.NewRepository(clickhousedb.Client(), traceLogger)
+		repository = clickhouse.NewRepository(clickhouseDB.Client(), traceLogger)
 
 		// Init use cases
 		entryList   = usecases.NewListEntry(repository, traceLogger)
@@ -62,8 +65,12 @@ func main() {
 		// Init http handlers
 		listEntryHandlers   = handlers.NewEntryHandlers(entryList, traceLogger)
 		listSuggestHandlers = handlers.NewSuggestHandlers(suggestList, traceLogger)
-		tracingMiddleware   = handlers.NewTracingMiddleware(tracer)
-		compressMiddleware  = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
+		filesHandlers       = handlers.NewFilesHandlers(viper.GetString("FRONTEND_PATH"))
+		infoHandlers        = handlers.NewInfoHandlers(traceLogger)
+
+		// Init http middleware
+		tracingMiddleware  = handlers.NewTracingMiddleware(tracer)
+		compressMiddleware = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
 	)
 
 	// Init http server
@@ -71,13 +78,19 @@ func main() {
 
 	// Init v1 routes
 	r := srv.Router()
-	r.Use(tracingMiddleware.Middleware, compressMiddleware.Middleware)
+	r.Use(compressMiddleware.Middleware)
+	r.HandleFunc("/", handlers.NewRedirectHandler("/ui/"))
 
-	r1 := r.PathPrefix("/api/v1").Subrouter()
-	r1.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
-	r1.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
+	r1 := r.PathPrefix("/ui/")
+	r1.Handler(http.StripPrefix("/ui/", filesHandlers.Handler())).Methods("GET")
 
-	var errGroup, ctx = errgroup.WithContext(context.Background())
+	r2 := r.PathPrefix("/api/v1").Subrouter()
+	r2.Use(tracingMiddleware.Middleware)
+	r2.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
+	r2.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
+	r2.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")
+
+	errGroup, ctx := errgroup.WithContext(context.Background())
 
 	errGroup.Go(func() error {
 		logger.Infof("start http server on: %s", srv.Addr())
@@ -103,7 +116,7 @@ func main() {
 		logger.Errorf("error while stopping tracer: %v", err)
 	}
 
-	if err = clickhousedb.Close(); err != nil {
+	if err = clickhouseDB.Close(); err != nil {
 		logger.Errorf("error while stopping clickhouse db: %v", err)
 	}
 

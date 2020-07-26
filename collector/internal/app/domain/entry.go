@@ -94,9 +94,9 @@ func (e *Entry) parseOtherObject(key, value []byte, dataType jsonparser.ValueTyp
 		return e.appendFloat(key, value)
 	case jsonparser.Object:
 		return jsonparser.ObjectEach(value, e.parseOtherObject)
+	case jsonparser.Boolean, jsonparser.NotExist, jsonparser.Null, jsonparser.String, jsonparser.Unknown:
+		e.appendString(key, value)
 	}
-
-	e.appendString(key, value)
 
 	return nil
 }

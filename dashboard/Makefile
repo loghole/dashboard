@@ -1,4 +1,4 @@
-APP_NAME     ?= github.com/lissteron/loghole/collector
+APP_NAME     ?= github.com/lissteron/loghole/dashboard
 SERVICE_NAME ?= $(shell basename $(dir $(abspath $(firstword $(MAKEFILE_LIST)))))
 
 DOCKERFILE   = docker/default/Dockerfile
@@ -11,17 +11,6 @@ ifdef VERSION
 VERSION = local
 endif
 
-GO_TEST_PACKAGES = $(shell go list ./... | egrep -v '(pkg|cmd)')
-
-go-mod:
-	go mod download
-
-go-test:
-	go test -race -v -cover -coverprofile coverage.out $(GO_TEST_PACKAGES)
-
-go-lint:
-	golangci-lint run -v
-
 docker-image:
 	docker build \
 	--build-arg APP_NAME=$(APP_NAME) \
@@ -32,3 +21,6 @@ docker-image:
 	-t $(DOCKER_IMAGE) \
 	-t $(DOCKER_IMAGE):$(VERSION) \
 	.
+
+build-frontend:
+	go-bindata -fs -o backend/bindata/bindata.go -prefix "./frontend/dist" -pkg "bindata" ./frontend/dist/...
