@@ -9,7 +9,6 @@ import (
 
 	"github.com/gadavy/tracing"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/lissteron/loghole/collector/config"
@@ -26,7 +25,7 @@ func main() {
 	// Init config, logger, exit chan
 	config.Init()
 
-	logger, err := initLogger()
+	logger, err := log.NewLogger(config.LoggerConfig())
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stdout, "init logger failed: %v", err)
 		os.Exit(1)
@@ -38,7 +37,7 @@ func main() {
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
 
 	// Init jaeger tracer.
-	tracer, err := initTracer()
+	tracer, err := tracing.NewTracer(config.TracerConfig())
 	if err != nil {
 		logger.Fatalf("init tracing client failed: %v", err)
 	}
@@ -46,17 +45,17 @@ func main() {
 	traceLogger := tracing.NewTraceLogger(logger)
 
 	// Init clients
-	clickhousedb, err := initClickhouse()
+	clickhouseDB, err := clickhouseclient.NewClient(config.ClickhouseConfig())
 	if err != nil {
 		logger.Fatalf("init clickhouse db client failed: %v", err)
 	}
 
 	// Init repository
 	repository := clickhouse.NewEntryRepository(
-		clickhousedb.Client(),
+		clickhouseDB.Client(),
 		traceLogger,
-		viper.GetInt("ENTRY_REPOSITORY_CAP"),
-		viper.GetDuration("ENTRY_REPOSITORY_PERIOD"),
+		viper.GetInt("service.writer.capacity"),
+		viper.GetDuration("service.writer.period"),
 	)
 
 	// Init service
@@ -66,10 +65,13 @@ func main() {
 	var (
 		entryHandlers  = handlers.NewEntryHandlers(entryService, traceLogger, tracer)
 		infoHandlers   = handlers.NewInfoHandlers(traceLogger)
-		authMiddleware = handlers.NewAuthMiddleware(viper.GetBool("ENABLE_AUTH"), viper.GetStringSlice("TOKEN_LIST"))
+		authMiddleware = handlers.NewAuthMiddleware(
+			viper.GetBool("service.auth.enable"),
+			viper.GetStringSlice("service.auth.tokens"),
+		)
 	)
 
-	srv := initHTTPServer()
+	srv := server.NewHTTP(config.ServerConfig())
 
 	r := srv.Router()
 	r.HandleFunc("/api/v1/info", infoHandlers.InfoHandler)
@@ -113,45 +115,9 @@ func main() {
 		logger.Errorf("error while stopping tracer: %v", err)
 	}
 
-	if err = clickhousedb.Close(); err != nil {
+	if err = clickhouseDB.Close(); err != nil {
 		logger.Errorf("error while stopping clickhouse db: %v", err)
 	}
 
 	logger.Info("application stopped")
-}
-
-func initLogger() (*zap.SugaredLogger, error) {
-	return log.NewLogger(
-		log.SetLevel(viper.GetString("LOGGER_LEVEL")),
-		log.AddCaller(),
-	)
-}
-
-func initTracer() (*tracing.Tracer, error) {
-	return tracing.NewTracer(&tracing.Config{
-		URI:         viper.GetString("JAEGER_URI"),
-		Enabled:     viper.GetString("JAEGER_URI") != "",
-		ServiceName: "collector",
-	})
-}
-
-func initClickhouse() (*clickhouseclient.Client, error) {
-	return clickhouseclient.NewClient(&clickhouseclient.Options{
-		Addr:         viper.GetString("CLICKHOUSE_URI"),
-		User:         viper.GetString("CLICKHOUSE_USER"),
-		Database:     viper.GetString("CLICKHOUSE_DATABASE"),
-		ReadTimeout:  viper.GetInt("CLICKHOUSE_READ_TIMEOUT"),
-		WriteTimeout: viper.GetInt("CLICKHOUSE_WRITE_TIMEOUT"),
-		SchemaPath:   viper.GetString("CLICKHOUSE_SCHEMA_PATH"),
-	})
-}
-
-func initHTTPServer() *server.HTTP {
-	return server.NewHTTP(
-		fmt.Sprintf("0.0.0.0:%s", viper.GetString("SERVER_HTTP_PORT")),
-		server.WithReadTimeout(viper.GetDuration("SERVER_READ_TIMEOUT")),
-		server.WithWriteTimeout(viper.GetDuration("SERVER_WRITE_TIMEOUT")),
-		server.WithIdleTimeout(viper.GetDuration("SERVER_IDLE_TIMEOUT")),
-		server.WithTLS(viper.GetString("SERVER_CERT"), viper.GetString("SERVER_KEY")),
-	)
 }

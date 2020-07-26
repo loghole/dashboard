@@ -8,110 +8,43 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-type Option func(s *builder) error
-
-type builder struct {
-	options []zap.Option
-	writers []zapcore.WriteSyncer
-	config  zapcore.EncoderConfig
-	encoder zapcore.Encoder
-	level   zapcore.LevelEnabler
+type Config struct {
+	Level   string
+	Options []Option
 }
 
-func newBuilder() *builder {
-	return &builder{
-		writers: []zapcore.WriteSyncer{os.Stdout},
-		options: make([]zap.Option, 0),
-		config: zapcore.EncoderConfig{
-			MessageKey:     "message",
-			LevelKey:       "level",
-			TimeKey:        "time",
-			NameKey:        "name",
-			CallerKey:      "caller",
-			StacktraceKey:  "stack",
-			EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-			EncodeTime:     zapcore.RFC3339TimeEncoder,
-			EncodeDuration: zapcore.MillisDurationEncoder,
-			EncodeCaller:   zapcore.ShortCallerEncoder,
-			EncodeName:     zapcore.FullNameEncoder,
-		},
-	}
-}
-
-func (b *builder) init() {
-	if b.encoder == nil {
-		b.encoder = zapcore.NewConsoleEncoder(b.config)
-	}
-
-	if b.level == nil {
-		b.level = zap.InfoLevel
-	}
-}
+type Option func(options []zap.Option) []zap.Option
 
 func AddCaller() Option {
-	return func(s *builder) (err error) {
-		s.options = append(s.options, zap.AddCaller())
-		return
+	return func(options []zap.Option) []zap.Option {
+		return append(options, zap.AddCaller())
 	}
 }
 
-func AddStacktrace(lvl string) Option {
-	return func(s *builder) (err error) {
-		s.options = append(s.options, zap.AddStacktrace(parseLevel(lvl)))
-		return
+func AddStacktrace(level string) Option {
+	return func(options []zap.Option) []zap.Option {
+		return append(options, zap.AddStacktrace(parseLevel(level)))
 	}
 }
 
-func SetLevel(lvl string) Option {
-	return func(s *builder) (err error) {
-		s.level = parseLevel(lvl)
-		s.options = append(s.options, zap.IncreaseLevel(s.level))
-
-		return
+func WithField(key string, value interface{}) Option {
+	return func(options []zap.Option) []zap.Option {
+		return append(options, zap.Fields(zap.Any(key, value)))
 	}
 }
 
-func WithFields(fields map[string]interface{}) Option {
-	return func(s *builder) (err error) {
-		zapFields := make([]zap.Field, 0, len(fields))
-
-		for key, val := range fields {
-			zapFields = append(zapFields, zap.Any(key, val))
-		}
-
-		s.options = append(s.options, zap.Fields(zapFields...))
-
-		return
-	}
-}
-
-func EnableJSON() Option {
-	return func(s *builder) (err error) {
-		s.encoder = zapcore.NewJSONEncoder(s.config)
-		s.config.EncodeLevel = zapcore.CapitalLevelEncoder
-
-		return
-	}
-}
-
-func NewLogger(options ...Option) (*zap.SugaredLogger, error) {
-	build := newBuilder()
-
-	for _, option := range options {
-		if err := option(build); err != nil {
-			return nil, err
-		}
+func NewLogger(config *Config) (*zap.SugaredLogger, error) {
+	cores := []zapcore.Core{
+		zapcore.NewCore(consoleEncoder(), os.Stdout, parseLevel(config.Level)),
 	}
 
-	build.init()
+	options := make([]zap.Option, 0, len(config.Options))
 
-	core := zapcore.NewCore(
-		build.encoder,
-		zapcore.NewMultiWriteSyncer(build.writers...),
-		build.level,
-	)
+	for _, option := range config.Options {
+		options = option(options)
+	}
 
-	return zap.New(core, build.options...).Sugar(), nil
+	return zap.New(zapcore.NewTee(cores...), options...).Sugar(), nil
 }
 
 func parseLevel(lvl string) zapcore.Level {
@@ -127,4 +60,20 @@ func parseLevel(lvl string) zapcore.Level {
 	default:
 		return zap.InfoLevel
 	}
+}
+
+func consoleEncoder() zapcore.Encoder {
+	return zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "message",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
+		EncodeDuration: zapcore.NanosDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	})
 }
