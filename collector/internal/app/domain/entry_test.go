@@ -17,16 +17,16 @@ func TestEntry_UnmarshalJSON(t *testing.T) {
 	}{
 		{
 			name:    "TimePass",
-			data:    []byte(`{"time":1593709730877594291}`),
+			data:    []byte(`{"time":"2020-07-26T16:05:27.429286952+03:00"}`),
 			wantErr: false,
 			expectedRes: &Entry{
-				Time:   time.Unix(0, 1593709730877594291),
-				Params: []byte(`{"time":1593709730877594291}`),
+				Time:   time.Unix(0, 1595768727429286952),
+				Params: []byte(`{"time":"2020-07-26T16:05:27.429286952+03:00"}`),
 			},
 		},
 		{
 			name:        "TimeError",
-			data:        []byte(`{"time": "2020-07-03T17:07:40Z"}`),
+			data:        []byte(`{"time":1595768727429286952}`),
 			wantErr:     true,
 			expectedErr: "Value looks like Number/Boolean/None, but can't find its end: ',' or '}' symbol",
 		},

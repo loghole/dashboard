@@ -134,7 +134,7 @@ func initTracer() (*tracing.Tracer, error) {
 	return tracing.NewTracer(&tracing.Config{
 		URI:         viper.GetString("JAEGER_URI"),
 		Enabled:     viper.GetString("JAEGER_URI") != "",
-		ServiceName: "dashboard_backend",
+		ServiceName: "dashboard",
 	})
 }
 

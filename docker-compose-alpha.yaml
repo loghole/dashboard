@@ -17,8 +17,6 @@ services:
 
   collector:
     image: loghole/collector:latest
-    volumes:
-      - ./database/:/db
     environment:
       - SERVER_HTTP_PORT=8080
       - SERVER_CERT=
@@ -39,8 +37,6 @@ services:
 
   dashboard:
     image: loghole/dashboard:latest
-    volumes:
-      - ./database/:/db
     environment:
       - SERVICE_HTTP_PORT=8080
       - LOGGER_LEVEL=debug

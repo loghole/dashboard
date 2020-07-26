@@ -7,10 +7,6 @@ DOCKER_IMAGE = loghole/$(SERVICE_NAME)
 VERSION  ?= $$(git describe --tags)
 GIT_HASH := $$(git rev-parse HEAD)
 
-ifdef VERSION
-VERSION = local
-endif
-
 docker-image:
 	docker build \
 	--build-arg APP_NAME=$(APP_NAME) \
