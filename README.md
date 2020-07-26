@@ -23,9 +23,9 @@ SERVER_IDLE_TIMEOUT=1s
 SERVER_TLS_CERT=cert.pem
 SERVER_TLS_KEY=key.pem
 
+SERVICE_NAME=collector
 SERVICE_WRITER_CAPACITY=1000
 SERVICE_WRITER_PERIOD=1s
-
 SERVICE_AUTH_ENABLE=true
 SERVICE_AUTH_TOKENS=secret_token_1 secret_token_2
 ```
@@ -57,6 +57,7 @@ SERVICE_AUTH_TOKENS=secret_token_1 secret_token_2
     "tls.key": "key.pem"
   },
   "service": {
+    "name": "collector",
     "writer": {
       "capacity": 1000,
       "period": "1s"
@@ -90,6 +91,8 @@ SERVER_WRITE_TIMEOUT=1s
 SERVER_IDLE_TIMEOUT=1s
 SERVER_TLS_CERT=cert.pem
 SERVER_TLS_KEY=key.pem
+
+SERVICE_NAME=dashboard
 ```
 
 #### JSON:
@@ -118,5 +121,8 @@ SERVER_TLS_KEY=key.pem
     "tls.cert": "cert.pem",
     "tls.key": "key.pem"
   },
+  "service": {
+    "name": "dashboard",
+  }
 }
 ```

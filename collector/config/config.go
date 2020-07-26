@@ -52,10 +52,21 @@ func ClickhouseConfig() *clickhouseclient.Config {
 }
 
 func TracerConfig() *tracing.Config {
+	var service string
+
+	switch {
+	case ServiceName != "":
+		service = ServiceName
+	case viper.GetString("service.name") != "":
+		service = viper.GetString("service.name")
+	default:
+		service = "collector"
+	}
+
 	return &tracing.Config{
 		URI:         viper.GetString("jaeger.uri"),
 		Enabled:     viper.GetString("jaeger.uri") != "",
-		ServiceName: "collector",
+		ServiceName: service,
 	}
 }
 
