@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strings"
 )
@@ -24,8 +23,6 @@ func NewAuthMiddleware(enabled bool, tokens []string) *AuthMiddleware {
 	for _, token := range tokens {
 		middleware.tokens[strings.TrimSpace(token)] = struct{}{}
 	}
-
-	log.Println(middleware.tokens)
 
 	return middleware
 }
