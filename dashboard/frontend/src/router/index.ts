@@ -8,7 +8,7 @@ const routes: Array<RouteConfig> = [
   {
     path: '/',
     name: 'Home',
-    component: Home,
+    component: Home
   },
   {
     path: '/logs/view',
@@ -16,14 +16,14 @@ const routes: Array<RouteConfig> = [
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: 'about' */ '../views/logs/View.vue'),
-  },
+    component: () => import(/* webpackChunkName: 'about' */ '../views/logs/View.vue')
+  }
 ];
 
 const router = new VueRouter({
   // mode: 'history',
   base: '/ui/',
-  routes,
+  routes
 });
 
 export default router;
