@@ -7,10 +7,6 @@ DOCKER_IMAGE = loghole/$(SERVICE_NAME)
 VERSION  ?= $$(git describe --tags)
 GIT_HASH := $$(git rev-parse HEAD)
 
-ifdef VERSION
-VERSION = local
-endif
-
 GO_TEST_PACKAGES = $(shell go list ./... | egrep -v '(pkg|cmd)')
 
 go-mod:
