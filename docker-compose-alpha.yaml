@@ -17,10 +17,12 @@ services:
 
   collector:
     image: loghole/collector:latest
+#    volumes:
+#      - './data/certs:/certs'
     environment:
       - SERVER_HTTP_PORT=8080
-      - SERVER_TLS_CERT=
-      - SERVER_TLS_KEY=
+#      - SERVER_TLS_CERT=./certs/cert.pem
+#      - SERVER_TLS_KEY=./certs/key.pem
 
       - SERVICE_AUTH_ENABLE=true
       - SERVICE_AUTH_TOKENS=secret_token_1 secret_token_2
