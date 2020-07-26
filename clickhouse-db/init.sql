@@ -1,6 +1,6 @@
-CREATE DATABASE logs;
+CREATE DATABASE IF NOT EXISTS logs;
 
-CREATE TABLE logs.internal_logs (
+CREATE TABLE IF NOT EXISTS logs.internal_logs (
     `time` DateTime DEFAULT now(),
     `date` Date DEFAULT now(),
     `nsec` UInt64,
@@ -22,4 +22,4 @@ CREATE TABLE logs.internal_logs (
       ORDER BY (time, namespace, source)
       SETTINGS index_granularity = 8192;
 
-CREATE TABLE logs.internal_logs_buffer AS logs.internal_logs ENGINE = Buffer(logs, internal_logs, 16, 10, 100, 10000, 1000000, 10000000, 100000000);
+CREATE TABLE IF NOT EXISTS logs.internal_logs_buffer AS logs.internal_logs ENGINE = Buffer(logs, internal_logs, 16, 10, 100, 10000, 1000000, 10000000, 100000000);
