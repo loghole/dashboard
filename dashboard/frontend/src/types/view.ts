@@ -20,4 +20,6 @@ interface SearchParam {
   type: string;
 }
 
-export { Param, Form, ParamValue, SearchParam };
+export {
+  Param, Form, ParamValue, SearchParam,
+};
