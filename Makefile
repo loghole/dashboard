@@ -13,4 +13,3 @@ dashboard-image:
 go-lint:
 	cd dashboard/backend && $(MAKE) go-lint
 	cd collector && $(MAKE) go-lint
-	
