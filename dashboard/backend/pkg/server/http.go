@@ -10,52 +10,47 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Option func(s *http.Server)
-
-func WithReadTimeout(timeout time.Duration) Option {
-	return func(s *http.Server) {
-		s.ReadTimeout = timeout
-	}
-}
-
-func WithWriteTimeout(timeout time.Duration) Option {
-	return func(s *http.Server) {
-		s.WriteTimeout = timeout
-	}
-}
-
-func WithIdleTimeout(timeout time.Duration) Option {
-	return func(s *http.Server) {
-		s.IdleTimeout = timeout
-	}
+type Config struct {
+	Addr         string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
+	TLSCertFile  string
+	TLSKeyFile   string
 }
 
 type HTTP struct {
-	addr   string
+	config *Config
 	server *http.Server
 	router *mux.Router
 }
 
-func NewHTTP(addr string, options ...Option) *HTTP {
+func NewHTTP(config *Config) *HTTP {
 	router := mux.NewRouter()
-	server := &http.Server{
-		Addr:    addr,
-		Handler: router,
-	}
 
-	for _, option := range options {
-		option(server)
-	}
-
-	return &HTTP{
-		addr:   addr,
-		server: server,
+	server := &HTTP{
+		config: config,
 		router: router,
+		server: &http.Server{
+			Addr:         config.Addr,
+			Handler:      router,
+			ReadTimeout:  config.ReadTimeout,
+			WriteTimeout: config.WriteTimeout,
+			IdleTimeout:  config.IdleTimeout,
+		},
 	}
+
+	return server
 }
 
-func (h *HTTP) ListenAndServe() error {
-	err := h.server.ListenAndServe()
+func (h *HTTP) ListenAndServe() (err error) {
+	switch {
+	case h.config.TLSCertFile != "" && h.config.TLSKeyFile != "":
+		err = h.server.ListenAndServeTLS(h.config.TLSCertFile, h.config.TLSKeyFile)
+	default:
+		err = h.server.ListenAndServe()
+	}
+
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
@@ -68,7 +63,7 @@ func (h *HTTP) Router() *mux.Router {
 }
 
 func (h *HTTP) Addr() string {
-	return fmt.Sprintf("http://%s", h.addr)
+	return fmt.Sprintf("http://%s", h.config.Addr)
 }
 
 func (h *HTTP) Shutdown(ctx context.Context) error {

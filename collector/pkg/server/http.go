@@ -10,55 +10,34 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Option func(h *HTTP)
-
-func WithReadTimeout(timeout time.Duration) Option {
-	return func(h *HTTP) {
-		h.server.ReadTimeout = timeout
-	}
-}
-
-func WithWriteTimeout(timeout time.Duration) Option {
-	return func(h *HTTP) {
-		h.server.WriteTimeout = timeout
-	}
-}
-
-func WithIdleTimeout(timeout time.Duration) Option {
-	return func(h *HTTP) {
-		h.server.IdleTimeout = timeout
-	}
-}
-
-func WithTLS(certFile, keyFile string) Option {
-	return func(h *HTTP) {
-		h.cert = certFile
-		h.key = keyFile
-	}
+type Config struct {
+	Addr         string
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
+	TLSCertFile  string
+	TLSKeyFile   string
 }
 
 type HTTP struct {
-	cert   string
-	key    string
-	addr   string
+	config *Config
 	server *http.Server
 	router *mux.Router
 }
 
-func NewHTTP(addr string, options ...Option) *HTTP {
+func NewHTTP(config *Config) *HTTP {
 	router := mux.NewRouter()
 
 	server := &HTTP{
-		addr:   addr,
+		config: config,
 		router: router,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: router,
+			Addr:         config.Addr,
+			Handler:      router,
+			ReadTimeout:  config.ReadTimeout,
+			WriteTimeout: config.WriteTimeout,
+			IdleTimeout:  config.IdleTimeout,
 		},
-	}
-
-	for _, option := range options {
-		option(server)
 	}
 
 	return server
@@ -66,8 +45,8 @@ func NewHTTP(addr string, options ...Option) *HTTP {
 
 func (h *HTTP) ListenAndServe() (err error) {
 	switch {
-	case h.key != "" && h.cert != "":
-		err = h.server.ListenAndServeTLS(h.cert, h.key)
+	case h.config.TLSCertFile != "" && h.config.TLSKeyFile != "":
+		err = h.server.ListenAndServeTLS(h.config.TLSCertFile, h.config.TLSKeyFile)
 	default:
 		err = h.server.ListenAndServe()
 	}
@@ -84,7 +63,7 @@ func (h *HTTP) Router() *mux.Router {
 }
 
 func (h *HTTP) Addr() string {
-	return fmt.Sprintf("http://%s", h.addr)
+	return fmt.Sprintf("http://%s", h.config.Addr)
 }
 
 func (h *HTTP) Shutdown(ctx context.Context) error {

@@ -1,7 +1,7 @@
 version: '3'
 services:
   clickhouse:
-    image: yandex/clickhouse-server
+    image: yandex/clickhouse-server:20.5.3.27
     volumes:
       - './data/clickhouse:/var/lib/clickhouse'
     ports:
@@ -19,7 +19,6 @@ services:
     image: golang:1.14-alpine
     volumes:
       - ./collector/:/app
-      - ./database/:/db
     working_dir: /app/cmd/collector/
     command: go run main.go
     environment:
@@ -35,7 +34,6 @@ services:
       - CLICKHOUSE_URI=clickhouse:9000
       - CLICKHOUSE_USER=
       - CLICKHOUSE_DATABASE=logs
-      - CLICKHOUSE_SCHEMA_PATH=/db/init.sql
 
       - JAEGER_URI=jaeger:6831
     ports:
@@ -48,17 +46,15 @@ services:
     image: golang:1.14-alpine
     volumes:
       - ./dashboard/backend/:/app
-      - ./database/:/db
-    working_dir: /app/cmd/backend/
-    command: go run -tags bindata main.go
+    working_dir: /app/cmd/dashboard/
+    command: go run -tags !bindata main.go
     environment:
-      - SERVICE_HTTP_PORT=8080
+      - SERVER_HTTP_PORT=8080
       - LOGGER_LEVEL=debug
 
       - CLICKHOUSE_URI=clickhouse:9000
       - CLICKHOUSE_USER=
       - CLICKHOUSE_DATABASE=logs
-      - CLICKHOUSE_SCHEMA_PATH=/db/init.sql
 
       - JAEGER_URI=jaeger:6831
     ports:
