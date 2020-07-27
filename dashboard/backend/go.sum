@@ -135,6 +135,7 @@ github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 h1:P6pPBnrTSX3DEVR4fDembhR
 github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0/go.mod h1:vmVJ0l/dxyfGW6FmdpVm2joNMFikkuWg0EoCKLGUMNw=
 github.com/lib/pq v1.0.0 h1:X5PMW56eZitiTeO7tKzZxFCSpbFZJtkMMooicw2us9A=
 github.com/lib/pq v1.0.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
+github.com/lissteron/loghole v0.1.1 h1:zu2u+1c9X5BN0EePMrpLfvBDufare6pj6/zof/5xbkI=
 github.com/lissteron/simplerr v0.4.0 h1:sBWugn47ZdJGcVs6PfWtdfL9dnfLZAovNR5gMap5X6Y=
 github.com/lissteron/simplerr v0.4.0/go.mod h1:rOUs/4d+lAmuDrdON4nONf8WzsXqL20yb/x8gfuO3QI=
 github.com/magiconair/properties v1.8.1 h1:ZC2Vc7/ZFkGmsVC9KvOjumD+G5lXy2RtTKyzRKO2BQ4=
