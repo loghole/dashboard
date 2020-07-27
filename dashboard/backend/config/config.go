@@ -12,6 +12,10 @@ import (
 	"github.com/lissteron/loghole/dashboard/pkg/server"
 )
 
+const (
+	defaultServiceName = "dashboard"
+)
+
 // nolint:gochecknoglobals // build args
 var (
 	ServiceName string
@@ -54,7 +58,7 @@ func TracerConfig() *tracing.Config {
 	case viper.GetString("service.name") != "":
 		service = viper.GetString("service.name")
 	default:
-		service = "dashboard"
+		service = defaultServiceName
 	}
 
 	return &tracing.Config{
