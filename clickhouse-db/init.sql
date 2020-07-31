@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS logs.internal_logs (
     `level` LowCardinality(String),
     `trace_id` String,
     `message` String,
+    `remote_ip` String,
     `params` String,
     `params_string.keys` Array(String),
     `params_string.values` Array(String),
@@ -23,6 +24,3 @@ CREATE TABLE IF NOT EXISTS logs.internal_logs (
       SETTINGS index_granularity = 8192;
 
 CREATE TABLE IF NOT EXISTS logs.internal_logs_buffer AS logs.internal_logs ENGINE = Buffer(logs, internal_logs, 16, 10, 100, 10000, 1000000, 10000000, 100000000);
-
-ALTER TABLE logs.internal_logs ADD COLUMN IF NOT EXISTS `remote_ip` String;
-ALTER TABLE logs.internal_logs_buffer ADD COLUMN IF NOT EXISTS `remote_ip` String;
