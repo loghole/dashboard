@@ -169,6 +169,7 @@ export default Vue.extend({
         host: '=' as string,
         buildCommit: '=' as string,
         configHash: '=' as string,
+        remoteIP: '=' as string,
       } as Record<string, string>,
       form: {
         startTime: new Date(new Date().getTime() - 1000 * 15),
@@ -181,6 +182,7 @@ export default Vue.extend({
         level: [] as string[],
         buildCommit: [] as string[],
         configHash: [] as string[],
+        remoteIP: [] as string[],
         message: '' as string,
       } as Form,
       defaultParams: [
@@ -193,6 +195,7 @@ export default Vue.extend({
         { key: 'host', name: 'Host', type: 'host' },
         { key: 'buildCommit', name: 'Build commit' },
         { key: 'configHash', name: 'Config hash' },
+        { key: 'remoteIP', name: 'remote IP' },
       ] as SearchParam[],
       params: [] as Param[],
       showAddParam: false,
@@ -377,6 +380,11 @@ export default Vue.extend({
           mapKey: 'configHash',
           key: 'config_hash',
           value: this.form.configHash,
+        },
+        {
+          mapKey: 'remoteIP',
+          key: 'remote_ip',
+          value: this.form.remoteIP,
         },
       ].forEach((h) => {
         const val = h.value as string[];

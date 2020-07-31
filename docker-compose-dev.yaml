@@ -4,6 +4,7 @@ services:
     image: yandex/clickhouse-server:20.5.3.27
     volumes:
       - './data/clickhouse:/var/lib/clickhouse'
+      - './clickhouse-db/init.sql:/docker-entrypoint-initdb.d/init-db.sql'
     ports:
       - 127.0.0.1:8123:8123
       - 127.0.0.1:9500:9000
