@@ -3,6 +3,7 @@ package handlers
 import (
 	"net"
 	"net/http"
+	"strings"
 )
 
 type RemoteIPMiddleware struct {
@@ -10,26 +11,25 @@ type RemoteIPMiddleware struct {
 }
 
 func NewRemoteIPMiddleware(header string) *RemoteIPMiddleware {
-	return &RemoteIPMiddleware{header: header}
+	return &RemoteIPMiddleware{header: strings.TrimSpace(header)}
 }
 
 func (m *RemoteIPMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var remoteAddr string
 
-		switch {
-		case m.header != "":
+		if m.header != "" {
 			remoteAddr = r.Header.Get(m.header)
-		default:
+		}
+
+		if remoteAddr == "" {
 			remoteAddr = r.RemoteAddr
 		}
 
 		host, _, err := net.SplitHostPort(remoteAddr)
 		if err == nil {
-			remoteAddr = host
+			r.RemoteAddr = host
 		}
-
-		r.RemoteAddr = remoteAddr
 
 		r.Header.Del(m.header)
 

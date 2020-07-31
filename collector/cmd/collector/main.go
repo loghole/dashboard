@@ -31,10 +31,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	logger.With("version", config.Version).
-		With("git_hash", config.GitHash).
-		With("build_at", config.BuildAt).
-		Info("init service")
+	logger.Infof("Version: %s, GitHash: %s, BuildAt: %s", config.Version, config.GitHash, config.BuildAt)
 
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)

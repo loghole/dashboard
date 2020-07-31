@@ -20,13 +20,11 @@ func (e *EntryList) UnmarshalJSON(data []byte) (err error) {
 	return err
 }
 
-
 func (e *EntryList) SetRemoteIP(remoteIP string) {
 	for _, entry := range *e {
 		entry.SetRemoteIP(remoteIP)
 	}
 }
-
 
 func (e *EntryList) parseArray(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 	if err != nil {

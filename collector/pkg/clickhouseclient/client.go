@@ -9,6 +9,10 @@ import (
 	_ "github.com/ClickHouse/clickhouse-go" // driver
 )
 
+const (
+	connectTryCount = 3
+)
+
 type Config struct {
 	Addr         string
 	User         string
@@ -23,7 +27,7 @@ type Client struct {
 }
 
 func NewClient(config *Config) (client *Client, err error) {
-	for i := 0; i < 3; i++ {
+	for i := 0; i < connectTryCount; i++ {
 		db, err := sqlx.Connect("clickhouse", connString(config))
 		if err != nil {
 			time.Sleep(time.Second)
