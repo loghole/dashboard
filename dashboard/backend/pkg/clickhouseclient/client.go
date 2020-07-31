@@ -2,6 +2,7 @@ package clickhouseclient
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
@@ -21,13 +22,18 @@ type Client struct {
 	db *sqlx.DB
 }
 
-func NewClient(config *Config) (*Client, error) {
-	db, err := sqlx.Connect("clickhouse", connString(config))
-	if err != nil {
-		return nil, err
+func NewClient(config *Config) (client *Client, err error) {
+	for i := 0; i < 3; i++ {
+		db, err := sqlx.Connect("clickhouse", connString(config))
+		if err != nil {
+			time.Sleep(time.Second)
+			continue
+		}
+
+		return &Client{db: db}, nil
 	}
 
-	return &Client{db: db}, nil
+	return nil, err
 }
 
 func (c *Client) Client() *sqlx.DB {

@@ -43,7 +43,7 @@ func buildListEntryQuery(
 	defer tracing.ChildSpan(&ctx).Finish()
 
 	builder := squirrel.Select("time", "nsec", "namespace", "source", "host", "level",
-		"trace_id", "message", "params", "build_commit", "config_hash").From("internal_logs_buffer")
+		"trace_id", "message", "remote_ip", "params", "build_commit", "config_hash").From("internal_logs_buffer")
 
 	for _, param := range input.Params {
 		if param.IsTypeJSON() {

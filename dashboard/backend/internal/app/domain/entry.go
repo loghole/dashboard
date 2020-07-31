@@ -14,6 +14,7 @@ type Entry struct {
 	Level       string          `json:"level"`
 	TraceID     string          `json:"trace_id"`
 	Message     string          `json:"message"`
+	RemoteIP    string          `json:"remote_ip"`
 	Params      json.RawMessage `json:"params"`
 	BuildCommit string          `json:"build_commit"`
 	ConfigHash  string          `json:"config_hash"`

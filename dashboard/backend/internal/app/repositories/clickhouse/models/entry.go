@@ -15,6 +15,7 @@ type Entry struct {
 	Level       string    `db:"level"`
 	TraceID     string    `db:"trace_id"`
 	Message     string    `db:"message"`
+	RemoteIP    string    `db:"remote_ip"`
 	Params      string    `db:"params"`
 	BuildCommit string    `db:"build_commit"`
 	ConfigHash  string    `db:"config_hash"`
@@ -30,6 +31,7 @@ func (e *Entry) ToDomain() *domain.Entry {
 		Level:       e.Level,
 		TraceID:     e.TraceID,
 		Message:     e.Message,
+		RemoteIP:    e.RemoteIP,
 		BuildCommit: e.BuildCommit,
 		ConfigHash:  e.ConfigHash,
 	}

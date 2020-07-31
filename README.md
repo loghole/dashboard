@@ -58,6 +58,7 @@ SERVICE_AUTH_TOKENS=secret_token_1 secret_token_2
   },
   "service": {
     "name": "collector",
+    "ip.header": "X-Real-IP",
     "writer": {
       "capacity": 1000,
       "period": "1s"

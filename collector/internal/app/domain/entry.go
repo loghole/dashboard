@@ -20,6 +20,14 @@ func (e *EntryList) UnmarshalJSON(data []byte) (err error) {
 	return err
 }
 
+
+func (e *EntryList) SetRemoteIP(remoteIP string) {
+	for _, entry := range *e {
+		entry.SetRemoteIP(remoteIP)
+	}
+}
+
+
 func (e *EntryList) parseArray(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 	if err != nil {
 		return
@@ -46,6 +54,7 @@ type Entry struct {
 	Message     string
 	BuildCommit string
 	ConfigHash  string
+	RemoteIP    string
 	Params      json.RawMessage
 	StringKey   []string
 	StringVal   []string
@@ -57,6 +66,10 @@ func (e *Entry) UnmarshalJSON(data []byte) (err error) {
 	*e = Entry{Params: data}
 
 	return jsonparser.ObjectEach(data, e.parseRootObject)
+}
+
+func (e *Entry) SetRemoteIP(remoteIP string) {
+	e.RemoteIP = remoteIP
 }
 
 func (e *Entry) parseRootObject(key, value []byte, dataType jsonparser.ValueType, offset int) (err error) {

@@ -26,8 +26,8 @@ type Logger interface {
 
 type EntryService interface {
 	Ping(ctx context.Context) error
-	StoreItem(ctx context.Context, data []byte) (err error)
-	StoreList(ctx context.Context, data []byte) (err error)
+	StoreItem(ctx context.Context, remoteIP string, data []byte) (err error)
+	StoreList(ctx context.Context, remoteIP string, data []byte) (err error)
 }
 
 type EntryHandlers struct {
@@ -63,7 +63,7 @@ func (h *EntryHandlers) StoreItemHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = h.service.StoreItem(ctx, data)
+	err = h.service.StoreItem(ctx, r.RemoteAddr, data)
 	if err != nil {
 		h.logger.Errorf(ctx, "store entry item failed: %v", err)
 		resp.ParseError(err)
@@ -85,7 +85,7 @@ func (h *EntryHandlers) StoreListHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = h.service.StoreList(ctx, data)
+	err = h.service.StoreList(ctx, r.RemoteAddr, data)
 	if err != nil {
 		h.logger.Errorf(ctx, "store entry list failed: %v", err)
 		resp.ParseError(err)

@@ -49,7 +49,7 @@ func (s *Service) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) StoreItem(ctx context.Context, data []byte) (err error) {
+func (s *Service) StoreItem(ctx context.Context, remoteIP string, data []byte) (err error) {
 	defer tracing.ChildSpan(&ctx).Finish()
 
 	entry, err := s.parseEntryItem(ctx, data)
@@ -57,6 +57,8 @@ func (s *Service) StoreItem(ctx context.Context, data []byte) (err error) {
 		s.logger.Errorf(ctx, "parse entry item failed: %v", err)
 		return simplerr.WrapWithCode(err, codes.UnmarshalError, "parse json failed")
 	}
+
+	entry.SetRemoteIP(remoteIP)
 
 	err = s.storage.StoreEntryList(ctx, []*domain.Entry{entry})
 	if err != nil {
@@ -67,7 +69,7 @@ func (s *Service) StoreItem(ctx context.Context, data []byte) (err error) {
 	return nil
 }
 
-func (s *Service) StoreList(ctx context.Context, data []byte) (err error) {
+func (s *Service) StoreList(ctx context.Context, remoteIP string, data []byte) (err error) {
 	defer tracing.ChildSpan(&ctx).Finish()
 
 	list, err := s.parseEntryList(ctx, data)
@@ -75,6 +77,8 @@ func (s *Service) StoreList(ctx context.Context, data []byte) (err error) {
 		s.logger.Errorf(ctx, "parse entry list failed: %v", err)
 		return simplerr.WrapWithCode(err, codes.UnmarshalError, "parse json failed")
 	}
+
+	list.SetRemoteIP(remoteIP)
 
 	err = s.storage.StoreEntryList(ctx, list)
 	if err != nil {
@@ -97,7 +101,7 @@ func (s *Service) parseEntryItem(ctx context.Context, data []byte) (*domain.Entr
 	return entry, nil
 }
 
-func (s *Service) parseEntryList(ctx context.Context, data []byte) ([]*domain.Entry, error) {
+func (s *Service) parseEntryList(ctx context.Context, data []byte) (domain.EntryList, error) {
 	defer tracing.ChildSpan(&ctx).Finish()
 
 	list := domain.EntryList{}
