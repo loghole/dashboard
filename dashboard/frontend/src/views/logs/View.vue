@@ -506,7 +506,6 @@ export default Vue.extend({
       });
   },
   beforeDestroy() {
-    console.log('destroy');
     window.removeEventListener('scroll', this.handleScroll);
   },
 });
