@@ -88,7 +88,7 @@
         </button>
         <!-- // add param -->
       </div>
-      <b-button :loading="loadingState" class="button is-primary is-fullwidth" @click="search"
+      <b-button :loading="loadingState" class="button is-primary is-fullwidth" @click="search(0)"
         >Search</b-button
       >
     </div>
@@ -121,7 +121,7 @@
               v-model="form.message"
             ></b-input>
             <p class="control">
-              <b-button :loading="loadingState" class="button is-primary" @click="search">Search</b-button>
+              <b-button :loading="loadingState" class="button is-primary" @click="search(0)">Search</b-button>
             </p>
           </b-field>
         </div>
@@ -149,6 +149,8 @@ import {
 
 import { SingleParam, IntervalRegexp } from '@/const/const';
 import FilterTags from '@/plugins/filter';
+
+const footerHeight = 250;
 
 export default Vue.extend({
   components: {
@@ -201,11 +203,15 @@ export default Vue.extend({
       messages: [],
       showAdditionalParam: false,
       loadingState: false,
+      loadLock: false,
     };
   },
   computed: {
     filteredTags(): string[] {
       return FilterTags(this.tags, this.showedTags, this.tagsInput);
+    },
+    scrollHeight() {
+      return window.innerHeight + footerHeight;
     },
   },
   methods: {
@@ -308,7 +314,7 @@ export default Vue.extend({
 
       return new Date(new Date().getTime() - offset);
     },
-    search(): void {
+    search(offset = 0, callback: any = null): void {
       let time = this.form.startTime as Date;
 
       if (this.form.interval !== '0') {
@@ -403,9 +409,13 @@ export default Vue.extend({
       this.loadingState = true;
 
       Vue.axios
-        .post('/api/v1/entry/list', { params, limit: 100 })
+        .post('/api/v1/entry/list', { params, limit: 50, offset })
         .then((response) => {
-          this.messages = response.data.data;
+          if (offset !== 0) {
+            this.messages = this.messages.concat(response.data.data);
+          } else {
+            this.messages = response.data.data;
+          }
 
           this.setTags(response.data.data);
         })
@@ -421,6 +431,10 @@ export default Vue.extend({
           console.error(e);
         }).then(() => {
           const diff = new Date().getTime() - startUT;
+
+          if (callback !== null) {
+            callback();
+          }
 
           setTimeout(() => {
             this.loadingState = false;
@@ -444,8 +458,22 @@ export default Vue.extend({
 
       this.tags = Object.keys(h);
     },
+    handleScroll() {
+      if (
+        this.loadLock === false
+        && document.body.scrollHeight - this.scrollHeight - window.scrollY < 0
+      ) {
+        this.loadLock = true;
+
+        this.search(this.messages.length, () => {
+          this.loadLock = false;
+        });
+      }
+    },
   },
   created() {
+    window.addEventListener('scroll', this.handleScroll);
+
     if (this.$route.query.params) {
       this.params = JSON.parse(decodeURIComponent(this.$route.query.params as string));
     }
@@ -476,6 +504,10 @@ export default Vue.extend({
       .catch((e) => {
         console.error(e);
       });
+  },
+  beforeDestroy() {
+    console.log('destroy');
+    window.removeEventListener('scroll', this.handleScroll);
   },
 });
 </script>
