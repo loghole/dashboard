@@ -1,12 +1,6 @@
 # BUILD BACKEND
 FROM golang:1.14.6-alpine as builder
 
-ARG APP_NAME
-ARG SERVICE_NAME
-ARG CMD_NAME
-ARG VERSION
-ARG GIT_HASH
-
 RUN apk add --no-cache ca-certificates tzdata git
 
 # Create appuser.
@@ -29,6 +23,12 @@ COPY go.mod ./go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
+
+ARG APP_NAME
+ARG SERVICE_NAME
+ARG CMD_NAME
+ARG VERSION
+ARG GIT_HASH
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s \
