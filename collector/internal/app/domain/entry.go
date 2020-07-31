@@ -20,8 +20,8 @@ func (e *EntryList) UnmarshalJSON(data []byte) (err error) {
 	return err
 }
 
-func (e *EntryList) SetRemoteIP(remoteIP string) {
-	for _, entry := range *e {
+func (e EntryList) SetRemoteIP(remoteIP string) {
+	for _, entry := range e {
 		entry.SetRemoteIP(remoteIP)
 	}
 }
