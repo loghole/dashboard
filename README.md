@@ -23,6 +23,7 @@ SERVER_IDLE_TIMEOUT=1s
 SERVER_TLS_CERT=cert.pem
 SERVER_TLS_KEY=key.pem
 
+SERVICE_IP_HEADER=X-Real-IP
 SERVICE_NAME=collector
 SERVICE_WRITER_CAPACITY=1000
 SERVICE_WRITER_PERIOD=1s
@@ -58,6 +59,7 @@ SERVICE_AUTH_TOKENS=secret_token_1 secret_token_2
   },
   "service": {
     "name": "collector",
+    "ip.header": "X-Real-IP",
     "writer": {
       "capacity": 1000,
       "period": "1s"

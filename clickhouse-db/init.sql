@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS logs.internal_logs (
     `level` LowCardinality(String),
     `trace_id` String,
     `message` String,
+    `remote_ip` String,
     `params` String,
     `params_string.keys` Array(String),
     `params_string.values` Array(String),

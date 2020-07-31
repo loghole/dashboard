@@ -12,9 +12,25 @@ import (
 )
 
 const (
-	insertLogsQuery = `INSERT INTO internal_logs_buffer (time,date,nsec,namespace,source,host,level,trace_id,message,
-		params,params_string.keys,params_string.values,params_float.keys,params_float.values,build_commit,config_hash)
-		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	insertLogsQuery = `INSERT INTO internal_logs_buffer 
+            (time, 
+             date, 
+             nsec, 
+             namespace, 
+             source, 
+             host, 
+             level, 
+             trace_id,
+             message, 
+             params, 
+             params_string.keys, 
+             params_string.values, 
+             params_float.keys, 
+             params_float.values, 
+             build_commit, 
+             config_hash,
+             remote_ip) 
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 )
 
 type Logger interface {
@@ -145,7 +161,7 @@ func (r *EntryRepository) getInsertEntryStmt() (tx *sql.Tx, stmt *sql.Stmt, err 
 func (r *EntryRepository) insertEntry(stmt *sql.Stmt, entry *domain.Entry) (err error) {
 	_, err = stmt.Exec(entry.Time, entry.Time, entry.Time.UnixNano(), entry.Namespace, entry.Source,
 		entry.Host, entry.Level, entry.TraceID, entry.Message, string(entry.Params), entry.StringKey,
-		entry.StringVal, entry.FloatKey, entry.FloatVal, entry.BuildCommit, entry.ConfigHash)
+		entry.StringVal, entry.FloatKey, entry.FloatVal, entry.BuildCommit, entry.ConfigHash, entry.RemoteIP)
 
 	return err
 }

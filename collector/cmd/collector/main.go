@@ -63,9 +63,11 @@ func main() {
 
 	// Init handlers
 	var (
-		entryHandlers  = handlers.NewEntryHandlers(entryService, traceLogger, tracer)
-		infoHandlers   = handlers.NewInfoHandlers(traceLogger)
-		authMiddleware = handlers.NewAuthMiddleware(
+		entryHandlers = handlers.NewEntryHandlers(entryService, traceLogger, tracer)
+		infoHandlers  = handlers.NewInfoHandlers(traceLogger)
+
+		remoteIPMiddleware = handlers.NewRemoteIPMiddleware("service.ip.header")
+		authMiddleware     = handlers.NewAuthMiddleware(
 			viper.GetBool("service.auth.enable"),
 			viper.GetStringSlice("service.auth.tokens"),
 		)
@@ -77,7 +79,7 @@ func main() {
 	r.HandleFunc("/api/v1/info", infoHandlers.InfoHandler)
 
 	r1 := r.PathPrefix("/api/v1").Subrouter()
-	r1.Use(authMiddleware.Middleware)
+	r1.Use(authMiddleware.Middleware, remoteIPMiddleware.Middleware)
 	r1.HandleFunc("/store", entryHandlers.StoreItemHandler)
 	r1.HandleFunc("/store/list", entryHandlers.StoreListHandler)
 	r1.HandleFunc("/ping", entryHandlers.PingHandler)
