@@ -43,7 +43,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import JSONCode from '@/components/messages/JSONCode.js';
+import JSONCode from '@/components/messages/JSONCode.vue';
 
 export default Vue.extend({
   components: {

@@ -38,7 +38,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import Message from '@/components/messages/Message.js';
+import Message from '@/components/messages/Message.vue';
 
 export default Vue.extend({
   components: {
