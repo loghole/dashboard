@@ -33,8 +33,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import LabelList from '@/components/LabelList.js';
-import TagInput from '@/components/TagInput.js';
+import LabelList from '@/components/LabelList.vue';
+import TagInput from '@/components/TagInput.vue';
 
 import { SingleParam } from '@/const/const';
 

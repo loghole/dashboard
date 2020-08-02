@@ -139,10 +139,10 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import DateTime from '@/components/DateTime.js';
-import Menu from '@/components/menu/Menu.js';
-import MessagesTable from '@/components/messages/MessagesTable.js';
-import JSONValue from '@/components/menu/JSONValue.js';
+import DateTime from '@/components/DateTime.vue';
+import Menu from '@/components/menu/Menu.vue';
+import MessagesTable from '@/components/messages/MessagesTable.vue';
+import JSONValue from '@/components/menu/JSONValue.vue';
 import {
   Param, Form, ParamValue, SearchParam,
 } from '@/types/view';
