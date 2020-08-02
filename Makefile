@@ -1,15 +1,22 @@
-run-alpha: db-image collector-image dashboard-image
-	docker-compose -f docker-compose-alpha.yaml up clickhouse-db collector dashboard
+APP_NAME     ?= github.com/lissteron/loghole/dashboard
+SERVICE_NAME ?= $(shell basename $(dir $(abspath $(firstword $(MAKEFILE_LIST)))))
 
-db-image:
-	cd clickhouse-db && $(MAKE) docker-image
+DOCKERFILE   = docker/default/Dockerfile
+DOCKER_IMAGE = loghole/$(SERVICE_NAME)
 
-collector-image:
-	cd collector && $(MAKE) docker-image
+VERSION  ?= $$(git describe --tags)
+GIT_HASH := $$(git rev-parse HEAD)
 
-dashboard-image:
-	cd dashboard && $(MAKE) docker-image
+docker-image:
+	docker build \
+	--build-arg APP_NAME=$(APP_NAME) \
+	--build-arg SERVICE_NAME=$(SERVICE_NAME) \
+	--build-arg GIT_HASH=$(GIT_HASH) \
+	--build-arg VERSION=$(VERSION) \
+	-f $(DOCKERFILE) \
+	-t $(DOCKER_IMAGE) \
+	-t $(DOCKER_IMAGE):$(VERSION) \
+	.
 
-go-lint:
-	cd dashboard/backend && $(MAKE) go-lint
-	cd collector && $(MAKE) go-lint
+build-frontend:
+	go-bindata -fs -o backend/bindata/bindata.go -prefix "./frontend/dist" -pkg "bindata" ./frontend/dist/...
