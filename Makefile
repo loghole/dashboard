@@ -1,4 +1,4 @@
-APP_NAME     ?= github.com/lissteron/loghole/dashboard
+APP_NAME     ?= github.com/loghole/dashboard
 SERVICE_NAME ?= $(shell basename $(dir $(abspath $(firstword $(MAKEFILE_LIST)))))
 
 DOCKERFILE   = docker/default/Dockerfile

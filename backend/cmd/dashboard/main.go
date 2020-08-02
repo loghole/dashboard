@@ -22,6 +22,10 @@ import (
 	"github.com/loghole/dashboard/pkg/server"
 )
 
+const (
+	traceKey = "trace_id"
+)
+
 // nolint: funlen,gocritic
 func main() {
 	// Init config, logger, exit chan
@@ -44,7 +48,7 @@ func main() {
 		logger.Fatalf("init tracing client failed: %v", err)
 	}
 
-	traceLogger := tracing.NewTraceLogger(logger)
+	traceLogger := tracing.NewTraceLogger(traceKey, logger)
 
 	// Init clients
 	clickhouseDB, err := clickhouseclient.NewClient(config.ClickhouseConfig())

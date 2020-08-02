@@ -1,11 +1,11 @@
 GO_TEST_PACKAGES = $(shell go list ./... | egrep -v '(pkg|cmd)')
 
-go-mod:
+gomod:
 	go mod download
 
-go-test:
+gotest:
 	go test -race -v -cover -coverprofile coverage.out $(GO_TEST_PACKAGES)
 
-go-lint:
+golint:
 	golangci-lint run -v
 
