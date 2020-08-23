@@ -195,7 +195,7 @@ export default Vue.extend({
         { key: 'host', name: 'Host', type: 'host' },
         { key: 'buildCommit', name: 'Build commit' },
         { key: 'configHash', name: 'Config hash' },
-        { key: 'remoteIP', name: 'remote IP' },
+        { key: 'remoteIP', name: 'Remote IP' },
       ] as SearchParam[],
       params: [] as Param[],
       showAddParam: false,

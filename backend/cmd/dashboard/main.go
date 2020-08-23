@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gadavy/tracing"
+	"github.com/loghole/lhw/zap"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
@@ -18,12 +19,7 @@ import (
 	"github.com/loghole/dashboard/internal/app/repositories/clickhouse"
 	"github.com/loghole/dashboard/internal/app/usecases"
 	"github.com/loghole/dashboard/pkg/clickhouseclient"
-	"github.com/loghole/dashboard/pkg/log"
 	"github.com/loghole/dashboard/pkg/server"
-)
-
-const (
-	traceKey = "trace_id"
 )
 
 // nolint: funlen,gocritic
@@ -31,13 +27,22 @@ func main() {
 	// Init config, logger, exit chan
 	config.Init()
 
-	logger, err := log.NewLogger(config.LoggerConfig())
+	logger, err := zap.NewLogger(config.LoggerConfig(), zap.AddCaller())
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "init logger failed: %v", err)
 		os.Exit(1)
 	}
 
-	logger.Infof("Version: %s, GitHash: %s, BuildAt: %s", config.Version, config.GitHash, config.BuildAt)
+	defer logger.Close()
+
+	logger.With(
+		"InstanceUUID", config.InstanceUUID,
+		"Version", config.Version,
+		"GitHash", config.GitHash,
+		"BuildAt", config.BuildAt,
+		"ServiceName", config.ServiceName,
+		"AppName", config.AppName,
+	).Info("application init")
 
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, syscall.SIGINT, syscall.SIGTERM)
@@ -48,7 +53,7 @@ func main() {
 		logger.Fatalf("init tracing client failed: %v", err)
 	}
 
-	traceLogger := tracing.NewTraceLogger(traceKey, logger)
+	traceLogger := tracing.DefaultTraceLogger(logger.SugaredLogger)
 
 	// Init clients
 	clickhouseDB, err := clickhouseclient.NewClient(config.ClickhouseConfig())
