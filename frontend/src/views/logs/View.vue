@@ -207,6 +207,7 @@ export default Vue.extend({
       showAdditionalParam: false,
       loadingState: false,
       loadLock: false,
+      fastSearchTimeout: 0,
     };
   },
   computed: {
@@ -215,6 +216,14 @@ export default Vue.extend({
     },
     scrollHeight() {
       return window.innerHeight + footerHeight;
+    },
+  },
+  watch: {
+    showedTags() {
+      this.someChanged();
+    },
+    'form.message': function () {
+      this.someChanged();
     },
   },
   methods: {
@@ -239,15 +248,23 @@ export default Vue.extend({
     },
     setStartTime(val: Date): void {
       this.form.startTime = val;
+
+      this.someChanged();
     },
     setEndTime(val: Date): void {
       this.form.endTime = val;
+
+      this.someChanged();
     },
     setInterval(val: string): void {
       this.form.interval = val;
+
+      this.someChanged();
     },
     setFormField(key: string, val: string[]): void {
       this.form[key] = val;
+
+      this.someChanged();
     },
     setOperatorField(key: string, val: string): void {
       this.operator[key] = val;
@@ -255,10 +272,13 @@ export default Vue.extend({
     setJSONField(idx: number, val: string | string[]): void {
       if (typeof val === 'string') {
         this.params[idx].value.item = val;
+        this.someChanged();
+
         return;
       }
 
       this.params[idx].value.list = val;
+      this.someChanged();
     },
     setJSONOperator(idx: number, val: string): void {
       if (
@@ -455,16 +475,33 @@ export default Vue.extend({
     getURL(param: Form | Param[] | string[]): string {
       return encodeURIComponent(JSON.stringify(param));
     },
-    setTags(list: Array<any>): void {
-      const h = {} as Record<string, boolean>;
+    setTags(list: Array<any>, prefix = ''): void {
+      let h = {} as Record<string, boolean>;
 
-      list.forEach((l: Record<string, number>) => {
-        Object.keys(l).forEach((k) => {
-          h[k] = true;
-        });
+      list.forEach((v) => {
+        h = Object.assign(h, this.findTags(v, prefix));
       });
 
       this.tags = Object.keys(h);
+    },
+    findTags(params: any, prefix = ''): any {
+      let h = {} as Record<string, boolean>;
+
+      if (Array.isArray(params)) {
+        return h;
+      }
+
+      Object.keys(params).forEach((k) => {
+        const key = prefix ? `${prefix}.${k}` : k;
+
+        if (typeof params[k] === 'object') {
+          h = Object.assign(h, this.findTags(params[k], key));
+        } else {
+          h[key] = true;
+        }
+      });
+
+      return h;
     },
     handleScroll() {
       if (
@@ -477,6 +514,11 @@ export default Vue.extend({
           this.loadLock = false;
         });
       }
+    },
+    someChanged() {
+      clearTimeout(this.fastSearchTimeout);
+
+      this.fastSearchTimeout = setTimeout(this.search, 250);
     },
   },
   created() {
