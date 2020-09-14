@@ -484,21 +484,23 @@ export default Vue.extend({
 
       this.tags = Object.keys(h);
     },
-    findTags(params: any, prefix = ''): any {
+    findTags(entryes: any, prefix = ''): Record<string, boolean> {
       let h = {} as Record<string, boolean>;
 
-      if (Array.isArray(params)) {
+      if (Array.isArray(entryes) || entryes === null) {
         return h;
       }
 
-      Object.keys(params).forEach((k) => {
+      Object.keys(entryes).forEach((k) => {
         const key = prefix ? `${prefix}.${k}` : k;
 
-        if (typeof params[k] === 'object') {
-          h = Object.assign(h, this.findTags(params[k], key));
-        } else {
-          h[key] = true;
+        if (typeof entryes[k] === 'object' && entryes[k] !== null) {
+          h = Object.assign(h, this.findTags(entryes[k], key));
+
+          return;
         }
+
+        h[key] = true;
       });
 
       return h;
