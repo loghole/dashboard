@@ -52,7 +52,7 @@ func buildListEntryQuery(
 		builder = builder.Where(models.ColumnParamFromDomain(param))
 	}
 
-	return builder.OrderBy("time DESC").
+	return builder.OrderBy("nsec DESC").
 		Suffix(fmt.Sprintf("LIMIT %d, %d", input.Offset, input.Limit)).
 		PlaceholderFormat(squirrel.Question).
 		ToSql()
