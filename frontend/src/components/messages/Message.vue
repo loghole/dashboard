@@ -11,7 +11,7 @@
       <!-- tags with values -->
       <template v-if="activeTags.length > 0">
         <td v-for="(tag, i) in activeTags" :key="`tag_${i}`">
-          {{ prepareText(tag, message[tag]) }}
+          {{ prepareText(tag, message) }}
         </td>
       </template>
       <td v-else>
@@ -23,7 +23,7 @@
               :key="`tag_name_${i}`">{{ name }}:</dt>
             <dd
               class="tag-value"
-              :key="`tag_value_${i}`">{{ prepareText(name, value) }}</dd>
+              :key="`tag_value_${i}`">{{ prepareText(name, message) }}</dd>
             </template>
           </template>
         </dl>
@@ -65,14 +65,24 @@ export default Vue.extend({
     };
   },
   methods: {
-    prepareText(tag: string, text: string): string {
+    prepareText(tag: string, data: any): string {
+      let value = data;
+
+      tag.split('.').forEach((k) => {
+        if (typeof value !== 'object' || !value[k]) {
+          value = '';
+        }
+
+        value = value[k];
+      });
+
       switch (tag) {
         case 'time':
-          return this.buildDatetime(text);
+          return this.buildDatetime(value);
         case 'level':
-          return text.toUpperCase();
+          return value.toUpperCase();
         default:
-          return text;
+          return value;
       }
     },
     buildDatetime(text: string): string {
