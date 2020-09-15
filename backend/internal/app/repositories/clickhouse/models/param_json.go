@@ -2,6 +2,8 @@ package models
 
 import (
 	"fmt"
+	"log"
+	"strconv"
 	"strings"
 
 	"github.com/loghole/dashboard/internal/app/domain"
@@ -9,8 +11,9 @@ import (
 )
 
 const (
-	stringParams = "(has(params_string.keys, ?) AND params_string.values[indexOf(params_string.keys, ?)] %s %s)"
-	floatParams  = "(has(params_float.keys, ?) AND params_float.values[indexOf(params_float.keys, ?)] %s %s)"
+	stringParams         = "(has(params_string.keys, ?) AND params_string.values[indexOf(params_string.keys, ?)] %s %s)"
+	floatParams          = "(has(params_float.keys, ?) AND params_float.values[indexOf(params_float.keys, ?)] %s %s)"
+	stringAndfloatParams = "(%s OR %s)"
 )
 
 type JSONParam struct {
@@ -31,13 +34,36 @@ func (p *JSONParam) getIn() (query string, args []interface{}, err error) {
 	args = append(args, p.Key, p.Key)
 
 	for _, value := range p.GetValueList() {
+		log.Println("value", value)
+
 		builder = append(builder, "?")
 		args = append(args, value)
 	}
 
 	param := strings.Join([]string{"(", strings.Join(builder, ","), ")"}, "")
 
-	return fmt.Sprintf(stringParams, domain.OperatorIn, param), args, nil
+	str := fmt.Sprintf(stringParams, domain.OperatorIn, param)
+
+	builder2 := make([]string, 0, len(p.Value.List))
+	args = append(args, p.Key, p.Key)
+
+	for _, value := range p.GetValueList() {
+		if intVal, err := strconv.ParseFloat(value, 64); err == nil {
+			builder2 = append(builder2, "?")
+			args = append(args, intVal)
+		}
+	}
+
+	param2 := strings.Join([]string{"(", strings.Join(builder2, ","), ")"}, "")
+
+	flo := fmt.Sprintf(floatParams, domain.OperatorIn, param2)
+
+	//
+
+	log.Println(fmt.Sprintf(stringAndfloatParams, str, flo))
+	log.Println(args)
+
+	return fmt.Sprintf(stringAndfloatParams, str, flo), args, nil
 }
 
 func (p *JSONParam) getNotIn() (query string, args []interface{}, err error) {
@@ -51,7 +77,25 @@ func (p *JSONParam) getNotIn() (query string, args []interface{}, err error) {
 
 	param := strings.Join([]string{"(", strings.Join(builder, ","), ")"}, "")
 
-	return fmt.Sprintf(stringParams, domain.OperatorNotIn, param), args, nil
+	str := fmt.Sprintf(stringParams, domain.OperatorNotIn, param)
+
+	builder2 := make([]string, 0, len(p.Value.List))
+	args = append(args, p.Key, p.Key)
+
+	for _, value := range p.GetValueList() {
+		if intVal, err := strconv.ParseFloat(value, 64); err == nil {
+			builder2 = append(builder2, "?")
+			args = append(args, intVal)
+		}
+	}
+
+	param2 := strings.Join([]string{"(", strings.Join(builder2, ","), ")"}, "")
+
+	flo := fmt.Sprintf(floatParams, domain.OperatorNotIn, param2)
+
+	//
+
+	return fmt.Sprintf(stringAndfloatParams, str, flo), args, nil
 }
 
 func (p *JSONParam) getLike() (query string, args []interface{}, err error) {
