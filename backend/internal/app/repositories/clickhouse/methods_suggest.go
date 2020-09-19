@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/gadavy/tracing"
+	"github.com/loghole/tracing"
 
 	"github.com/loghole/dashboard/internal/app/repositories/clickhouse/tools"
 )
