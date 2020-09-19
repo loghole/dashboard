@@ -36,6 +36,7 @@ func (l *ListEntry) Do(ctx context.Context, input *ListEntryIn) ([]*domain.Entry
 	result, err := l.storage.ListEntry(ctx, input.Query)
 	if err != nil {
 		l.logger.Errorf(ctx, "get entry list failed: %v", err)
+
 		return nil, simplerr.WrapWithCode(err, codes.DatabaseError, "get entry list failed")
 	}
 

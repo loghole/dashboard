@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/gadavy/tracing"
 
 	"github.com/loghole/dashboard/internal/app/domain"
 )
@@ -34,7 +35,10 @@ func NewBuilder() *Builder {
 	}
 }
 
+// nolint:funlen // builder
 func (b *Builder) Build(ctx context.Context, input *domain.Query) (query string, args []interface{}, err error) {
+	defer tracing.ChildSpan(&ctx).Finish()
+
 	for _, param := range input.Params {
 		if param.IsTypeJSON() {
 			continue

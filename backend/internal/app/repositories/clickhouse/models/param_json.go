@@ -103,6 +103,7 @@ func (p *JSONParam) getLike() (query string, args []interface{}, err error) {
 	return likeParams, args, nil
 }
 
+// nolint:unparam // need
 func (p *JSONParam) getLikeWithValue(val string) (query string, args []interface{}, err error) {
 	args = []interface{}{p.Key, tools.CreateLike(val)}
 
