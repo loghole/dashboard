@@ -3,8 +3,8 @@ package usecases
 import (
 	"context"
 
-	"github.com/gadavy/tracing"
 	"github.com/lissteron/simplerr"
+	"github.com/loghole/tracing"
 
 	"github.com/loghole/dashboard/internal/app/codes"
 	"github.com/loghole/dashboard/internal/app/domain"

@@ -9,8 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gadavy/tracing"
 	"github.com/loghole/lhw/zap"
+	"github.com/loghole/tracing"
+	"github.com/loghole/tracing/tracehttp"
+	"github.com/loghole/tracing/tracelog"
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
@@ -53,7 +55,7 @@ func main() {
 		logger.Fatalf("init tracing client failed: %v", err)
 	}
 
-	traceLogger := tracing.DefaultTraceLogger(logger.SugaredLogger)
+	traceLogger := tracelog.NewTraceLogger(logger.SugaredLogger)
 
 	// Init clients
 	clickhouseDB, err := clickhouseclient.NewClient(config.ClickhouseConfig())
@@ -76,7 +78,6 @@ func main() {
 		infoHandlers        = handlers.NewInfoHandlers(traceLogger)
 
 		// Init http middleware
-		tracingMiddleware  = handlers.NewTracingMiddleware(tracer)
 		compressMiddleware = handlers.NewCompressMiddleware(gzip.DefaultCompression, traceLogger)
 	)
 
@@ -92,7 +93,7 @@ func main() {
 	r1.Handler(http.StripPrefix("/ui/", filesHandlers.Handler())).Methods("GET")
 
 	r2 := r.PathPrefix("/api/v1").Subrouter()
-	r2.Use(tracingMiddleware.Middleware)
+	r2.Use(tracehttp.NewMiddleware(tracer).Middleware)
 	r2.HandleFunc("/info", infoHandlers.InfoHandler).Methods("GET")
 	r2.HandleFunc("/entry/list", listEntryHandlers.ListEntryHandler).Methods("POST")
 	r2.HandleFunc("/suggest/{type}", listSuggestHandlers.ListHandler).Methods("POST")

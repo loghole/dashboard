@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/gadavy/tracing"
+	"github.com/loghole/tracing"
 
 	"github.com/loghole/dashboard/internal/app/domain"
 	"github.com/loghole/dashboard/internal/app/repositories/clickhouse/models"

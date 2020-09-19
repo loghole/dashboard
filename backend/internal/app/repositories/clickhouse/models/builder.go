@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/gadavy/tracing"
+	"github.com/loghole/tracing"
 
 	"github.com/loghole/dashboard/internal/app/domain"
 )

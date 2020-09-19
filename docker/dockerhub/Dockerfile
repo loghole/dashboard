@@ -1,5 +1,5 @@
 # BUILD FRONTEND
-FROM node:14.2.0-alpine as ui_builder
+FROM node:14.11.0-alpine as ui_builder
 
 WORKDIR /usr/src/app
 
@@ -13,7 +13,7 @@ COPY ./frontend/ ./
 RUN yarn build
 
 # BUILD BACKEND
-FROM golang:1.14.6-alpine as go_builder
+FROM golang:1.5-alpine as go_builder
 
 RUN apk add --no-cache ca-certificates tzdata git
 
