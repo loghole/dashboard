@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/loghole/dashboard/internal/app/domain"
@@ -9,87 +10,126 @@ import (
 )
 
 const (
-	stringParams = "(has(params_string.keys, ?) AND params_string.values[indexOf(params_string.keys, ?)] %s %s)"
-	floatParams  = "(has(params_float.keys, ?) AND params_float.values[indexOf(params_float.keys, ?)] %s %s)"
+	anyParams  = "(keys=? AND values=?)"
+	likeParams = "(keys=? AND values LIKE ?)"
+	ltgtParams = "(keys=? AND values%s?)"
 )
 
 type JSONParam struct {
 	domain.QueryParam
+	Type fieldType
 }
 
-func JSONParamFromDomain(param *domain.QueryParam) *JSONParam {
-	return &JSONParam{*param}
+func JSONParamFromDomain(param *domain.QueryParam, t fieldType) *JSONParam {
+	return &JSONParam{QueryParam: *param, Type: t}
 }
 
 // nolint:golint,stylecheck,gocritic
 func (p *JSONParam) ToSql() (query string, args []interface{}, err error) {
-	return buildSQL(p)
+	switch {
+	case p.IsIn(), p.IsNotIn():
+		return p.getIn()
+	case p.IsLike():
+		return p.prepareParamLike()
+	case p.IsLtGt():
+		return p.prepareParamLtGt()
+	default:
+		return p.getDefault()
+	}
 }
 
 func (p *JSONParam) getIn() (query string, args []interface{}, err error) {
 	builder := make([]string, 0, len(p.Value.List))
-	args = append(args, p.Key, p.Key)
 
-	for _, value := range p.GetValueList() {
-		builder = append(builder, "?")
-		args = append(args, value)
+	if p.Type == typeString {
+		for _, value := range p.GetValueList() {
+			builder = append(builder, anyParams)
+			args = append(args, p.Key, value)
+		}
+	} else {
+		for _, value := range p.GetValueList() {
+			if val, err := strconv.ParseFloat(value, 64); err == nil {
+				builder = append(builder, anyParams)
+				args = append(args, p.Key, val)
+			}
+		}
 	}
 
-	param := strings.Join([]string{"(", strings.Join(builder, ","), ")"}, "")
-
-	return fmt.Sprintf(stringParams, domain.OperatorIn, param), args, nil
+	return strings.Join([]string{"(", strings.Join(builder, " OR "), ")"}, ""), args, nil
 }
 
-func (p *JSONParam) getNotIn() (query string, args []interface{}, err error) {
-	builder := make([]string, 0, len(p.Value.List))
-	args = append(args, p.Key, p.Key)
-
-	for _, value := range p.GetValueList() {
-		builder = append(builder, "?")
-		args = append(args, value)
+func (p *JSONParam) prepareParamLike() (query string, args []interface{}, err error) {
+	if p.IsList() {
+		return p.prepareParamListLike()
 	}
 
-	param := strings.Join([]string{"(", strings.Join(builder, ","), ")"}, "")
+	switch {
+	case p.IsOperator(domain.OperatorLike), p.IsOperator(domain.OperatorNotLike):
+		return p.getLike()
+	default:
+		panic(ErrNotImplemented)
+	}
+}
 
-	return fmt.Sprintf(stringParams, domain.OperatorNotIn, param), args, nil
+func (p *JSONParam) prepareParamListLike() (query string, args []interface{}, err error) {
+	var (
+		queries = make([]string, 0, len(p.GetValueList()))
+		a       = make([]interface{}, 0)
+		q       string
+	)
+
+	for _, value := range p.GetValueList() {
+		switch {
+		case p.IsOperator(domain.OperatorLike), p.IsOperator(domain.OperatorNotLike):
+			q, a, err = p.getLikeWithValue(value)
+		default:
+			panic(ErrNotImplemented)
+		}
+
+		if err != nil {
+			return "", nil, err
+		}
+
+		queries = append(queries, q)
+		args = append(args, a...)
+	}
+
+	return strings.Join(queries, " OR "), args, nil
 }
 
 func (p *JSONParam) getLike() (query string, args []interface{}, err error) {
-	query = fmt.Sprintf(stringParams, "LIKE", "?")
-	args = []interface{}{p.Key, p.Key, tools.CreateLike(p.GetValueItem())}
+	args = []interface{}{p.Key, tools.CreateLike(p.GetValueItem())}
 
-	return query, args, nil
+	return likeParams, args, nil
 }
 
-func (p *JSONParam) getNotLike() (query string, args []interface{}, err error) {
-	query = fmt.Sprintf(stringParams, "NOT LIKE", "?")
-	args = []interface{}{p.Key, p.Key, tools.CreateLike(p.GetValueItem())}
-
-	return query, args, nil
-}
-
+// nolint:unparam // need
 func (p *JSONParam) getLikeWithValue(val string) (query string, args []interface{}, err error) {
-	query = fmt.Sprintf(stringParams, "LIKE", "?")
-	args = []interface{}{p.Key, p.Key, tools.CreateLike(val)}
+	args = []interface{}{p.Key, tools.CreateLike(val)}
 
-	return query, args, nil
+	return likeParams, args, nil
 }
 
-func (p *JSONParam) getNotLikeWithValue(val string) (query string, args []interface{}, err error) {
-	query = fmt.Sprintf(stringParams, "NOT LIKE", "?")
-	args = []interface{}{p.Key, p.Key, tools.CreateLike(val)}
+func (p *JSONParam) prepareParamLtGt() (query string, args []interface{}, err error) {
+	if p.IsList() {
+		return "", nil, ErrArrayNotAccepted
+	}
 
-	return query, args, nil
+	if value, ok := valueToFloat(p.GetValueItem()); ok {
+		return p.getLtGtFloat(value)
+	}
+
+	return p.getLtGtString()
 }
 
 func (p *JSONParam) getLtGtString() (query string, args []interface{}, err error) {
-	return fmt.Sprintf(stringParams, getOperator(p.Operator), "?"), []interface{}{p.Key, p.Key, p.Value.Item}, nil
+	return fmt.Sprintf(ltgtParams, getOperator(p.Operator)), []interface{}{p.Key, p.Value.Item}, nil
 }
 
 func (p *JSONParam) getLtGtFloat(val float64) (query string, args []interface{}, err error) {
-	return fmt.Sprintf(floatParams, getOperator(p.Operator), "?"), []interface{}{p.Key, p.Key, val}, nil
+	return fmt.Sprintf(ltgtParams, getOperator(p.Operator)), []interface{}{p.Key, val}, nil
 }
 
 func (p *JSONParam) getDefault() (query string, args []interface{}, err error) {
-	return fmt.Sprintf(stringParams, getOperator(p.Operator), "?"), []interface{}{p.Key, p.Key, p.Value.Item}, nil
+	return fmt.Sprintf(ltgtParams, getOperator(p.Operator)), []interface{}{p.Key, p.Value.Item}, nil
 }

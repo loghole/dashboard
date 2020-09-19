@@ -146,7 +146,7 @@ func (p *ParamValue) Validate() error {
 
 func (p *ParamValue) itemRules() []validation.Rule {
 	return []validation.Rule{
-		validation.When(p.List != nil, validation.In("").ErrorCode(codes.ValidQueryParamsValueItemEmpty.String())),
+		validation.When(p.List != nil, validation.NotIn("").ErrorCode(codes.ValidQueryParamsValueItemEmpty.String())),
 	}
 }
 

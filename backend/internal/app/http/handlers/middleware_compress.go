@@ -44,6 +44,7 @@ func (m *CompressMiddleware) Middleware(next http.Handler) http.Handler {
 		encWriter := m.getEncWriter(w, encoding)
 		if encWriter == nil {
 			next.ServeHTTP(w, r)
+
 			return
 		}
 
@@ -103,6 +104,7 @@ func (m *CompressMiddleware) getEncWriter(w io.Writer, encoding string) io.Write
 
 	if err != nil {
 		m.logger.Errorf(context.TODO(), "init encoder failed: %v", err)
+
 		return nil
 	}
 

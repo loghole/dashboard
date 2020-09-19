@@ -48,11 +48,13 @@ func (l *ListSuggest) Do(ctx context.Context, input *ListSuggestIn) (result []st
 		result, err = l.storage.ListNamespaceSuggest(ctx, input.Value)
 	default:
 		l.logger.Errorf(ctx, "invalid suggest type: %v", input.Type)
+
 		return nil, simplerr.WrapWithCode(ErrInvalidSuggestType, codes.InvalidSuggestType, "invalid type")
 	}
 
 	if err != nil {
 		l.logger.Errorf(ctx, "get suggest list failed: %v", err)
+
 		return nil, simplerr.WrapWithCode(err, codes.DatabaseError, "get suggest list failed")
 	}
 
