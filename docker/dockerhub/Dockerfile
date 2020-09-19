@@ -36,7 +36,8 @@ WORKDIR /src
 COPY ./backend/go.mod ./backend/go.sum ./
 RUN go mod download && go mod verify
 
-COPY ./.git ./backend ./ 
+COPY ./backend ./
+COPY ./.git ./.git
 
 ARG APP_NAME=github.com/loghole/dashboard
 ARG SERVICE_NAME=dashboard
