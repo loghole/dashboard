@@ -13,7 +13,7 @@ COPY ./frontend/ ./
 RUN yarn build
 
 # BUILD BACKEND
-FROM golang:1.5-alpine as go_builder
+FROM golang:1.15-alpine as go_builder
 
 RUN apk add --no-cache ca-certificates tzdata git
 
@@ -36,7 +36,7 @@ WORKDIR /src
 COPY ./backend/go.mod ./backend/go.sum ./
 RUN go mod download && go mod verify
 
-COPY ./backend ./
+COPY ./.git ./backend ./ 
 
 ARG APP_NAME=github.com/loghole/dashboard
 ARG SERVICE_NAME=dashboard
