@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package suggest.v1;
+option go_package = "suggest";
+
+service Suggest {
+    rpc List (ListReq) returns (ListResp) {
+        option (google.api.http) = {
+            post: "/api/v1/suggest/{type}"
+            body: "*"
+        };
+    }
+}
+
+message ListReq {
+    string type = 1;
+    string value = 2;
+}
+
+message ListResp {
+    repeated string data = 1;
+}

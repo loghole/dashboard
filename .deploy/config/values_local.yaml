@@ -1,0 +1,4 @@
+# Place config values for LOCAL development here
+LOGGER_LEVEL: DEBUG
+JAEGER_ADDR: jaeger:6831
+CLICKHOUSE_URI: clickhouse-db:9000

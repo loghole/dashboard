@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+package entry.v1;
+option go_package = "entry";
+
+service Entry {
+  rpc List (ListReq) returns (ListResp) {
+    option (google.api.http) = {
+      post: "/api/v1/entry/list"
+      body: "*"
+    };
+  }
+}
+
+message ListReq {
+  repeated QueryParam params = 1;
+  int64 limit = 2;
+  int64 offset = 3;
+}
+
+message ListResp {
+  bytes data = 1; // tron_option:json
+}
+
+message QueryParam {
+  string type = 1;
+  string key = 2;
+  ParamValue value = 3;
+  string operator = 4;
+}
+
+message ParamValue {
+  string item = 1;
+  repeated string list = 2;
+}
