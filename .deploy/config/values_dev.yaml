@@ -1,0 +1,4 @@
+# Place develop overrides here
+LOGGER_LEVEL: INFO
+JAEGER_ADDR: jaeger:6831
+CLICKHOUSE_URI: clickhouse-db:9000
